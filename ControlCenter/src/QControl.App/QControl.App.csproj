@@ -1,0 +1,113 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      **GUI 子系统**（2026-10-29 用户拍板「运行程序改为默认没有 cmd 窗口的启动」）。
+      控制台子系统的 exe 只要被双击，Windows 就给它配一个控制台窗口，而且**一直挂在桌面上**
+      直到程序退出 —— 一个托盘常驻的硬件控制工具带个黑框显然不对。
+
+      文字输出没有被丢掉：需要时由 `ConsoleHost.Ensure()` 接回一个控制台
+      （从 cmd/PowerShell/bash 启动就借父控制台；自检、帮助这类诊断自己开一个），
+      双击起界面时一个窗口都不多。见 ConsoleHost.cs 的注释。
+
+      ⚠️ 由此带来的**唯一**行为差异：cmd 里敲 QControl.exe 不再"占用"那个提示符
+         （GUI 进程 cmd 不等它）。要等它退出就用 start /wait，src\run-tray.cmd 已经这么写了；
+         打包脚本里跑自检的那处同理（pack-release.ps1 用 Start-Process -Wait）。
+      ⚠️ 开机自启跑的就是这个 exe（计划任务：QControl.exe 带 tray 开关）。2026-10-30 之前的
+         静默启动器 QControl.Silent.exe 已并入本程序 —— 它存在的唯一理由就是"主程序是控制台
+         子系统"，而这条从 2026-10-29 改成 WinExe 起就不成立了。
+    -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>QControl.App</RootNamespace>
+    <AssemblyName>QControl</AssemblyName>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!--
+      **应用图标**（2026-10-23 加）。之前整个项目**一个 .ico 都没有**，于是任务栏、
+      Alt+Tab、资源管理器看到的都是 .NET 的通用默认图标。
+      ApplicationIcon = 编进 PE 的 Win32 图标资源（资源管理器 / 任务栏 / Alt+Tab 兜底）；
+      Window.Icon（MainWindow.xaml）= 窗口自己那个 HICON，任务栏按钮优先用它。
+      两份必须**同一个文件**，否则任务栏和 exe 会长得不一样。
+
+      ⚠️ 图标是生成物，别手改二进制：`python spike/_gen_app_icon.py` 出 9 档
+         （16/20/24/32/40/48/64/128/256），几何数字与侧栏 logo、托盘图标同源。
+    -->
+    <ApplicationIcon>Assets\qcontrol.ico</ApplicationIcon>
+    <!--
+      **WPF = 主界面**（2026-10-21 用户拍板「把前端改为 WPF」，见 ROADMAP R4 → 已决）。
+      托盘（Shell_NotifyIcon）、OSD 分层窗口、图标/卡片位图仍是裸 Win32 + 自绘软件光栅化
+      （App/Render/），**没有**回头捡 WinForms —— 那套 2026-10-21 已按"轻量化"移除，
+      NotifyIcon + GDI+ 会把 Microsoft.WindowsDesktop.App 和一条 STA 消息循环焊死在启动路径上。
+
+      WPF 只在 Ui/ 里用，且**按需加载**：程序集在第一次 new MainWindow 时才被解析，
+      窗口关掉后整棵可视树随 Dispatcher 一起回收（UiHost）。所以"没开过窗口"时
+      工作集与加 WPF 之前基本一致 —— 这是能选进程内直读 AppState 的前提。
+      ⚠️ 2026-11-02 修：上面这句以前一直是**不成立的**。`Program.Main` 里直接调
+         `UiShot.Run` / `UiHost.Show` 会让 JIT 编译 Main 时顺着签名把 MainWindow
+         解析出来，`PresentationFramework/Core` + `WindowsBase` + `System.Xaml`
+         在启动那一刻就进了进程（实测 0.3 秒时四份都在，一次窗口都没开）。
+         现在所有界面入口都走 `Ui/UiEntry.cs`（每个方法 `NoInlining`），
+         Main 只解析到那一层的签名。新增界面入口必须加在 UiEntry，别在 Program 里直接调。
+      别在这里改 UseWPF 之类；OutputType 现在是 **WinExe**（2026-10-29，见上面的注释块），
+      文字输出由 ConsoleHost 按需接回控制台。
+      开机自启也走这个 exe（WinExe，无控制台），见 Hal/Sys/Autostart.cs。
+    -->
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <!--
+    **GC 档位**（2026-10-21「降内存」B 档）。开关不在这里，在旁边的
+    `runtimeconfig.template.json` —— JSON 不让写注释，所以理由写在下面：
+
+      System.GC.Server      = false   工作站 GC。本进程就一个采样线程 + 一个
+                                      监听线程池，服务器 GC 只会为每个核分一个堆
+                                      和一条 GC 线程，纯亏。
+      System.GC.Concurrent  = false   关掉后台并发 GC。它为了让用户线程几乎不
+                                      停顿，会额外多占一段堆、并常驻一条 GC 线程；
+                                      我们每秒才采一帧、Gen2 极少，换成短一点
+                                      的 STW 更划算。
+      System.GC.Conserve   = 9       GC  aggressiveness 调到最省内存一档：更愿意
+                                      把腾出来的堆还给操作系统。代价是 GC 稍频繁
+                                      （多一点 CPU）。⚠️ 如果发现日志里采样抖动或
+                                      CPU 升高，往下调到 5~7。
+      System.GC.LOHThreshold = 131072  大对象门槛 85 KB → 128 KB。落在中间的那批
+                                      数组进 Gen2 而不是 LOH —— LOH 只在 Gen2
+                                      GC 时才回收，还容易碎。❗必须写**十进制**，
+                                      别写成 "0x20000"：这里是 JSON，字符串形态
+                                      的十六进制在某些版本上不认。
+
+    ⚠️ 全程序只有一个 exe，这套档位对"界面 / 托盘 / 自启"三种形态一视同仁。
+    ⚠️ 想确认生效：编译后看
+       `bin\Release\net10.0-windows\QControl.runtimeconfig.json`
+       里这几个键在不在 —— SDK 把 template 与自动生成的配置**合并**，原来的
+       InvariantGlobalization 那些键必须还在，缺了就是合并出问题了。
+  -->
+
+  <!--
+    零 NuGet 依赖：HttpListener 是共享框架的一部分（我们最后用的是 TcpListener）。
+     P6 起接入 Core（纯逻辑）与 Hal（Windows 绑定）—— 前者是 net10.0、后者 net10.0-windows，
+    本项目的 TFM 是 net10.0-windows，两者都能引。
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\QControl.Core\QControl.Core.csproj" />
+    <ProjectReference Include="..\QControl.Hal\QControl.Hal.csproj" />
+  </ItemGroup>
+
+  <!--
+    同一个 .ico 还要能被 WPF 当**资源**读到（MainWindow.xaml 的 Icon= 走 pack URI）。
+    SDK 不会自动把 .ico 收成 Resource，必须显式列出来，否则加载时
+    "找不到资源 Assets/qcontrol.ico"。
+  -->
+  <ItemGroup>
+    <Resource Include="Assets\qcontrol.ico" />
+    <!-- 关于页「关于作者」的头像：同一套几何出的 256 档 PNG（由上面的脚本一起生成）。
+         单独一张 PNG 是因为 Image 读 .ico 时挑帧不可控，46px 上会糊。 -->
+    <Resource Include="Assets\qcontrol-mark.png" />
+  </ItemGroup>
+
+</Project>

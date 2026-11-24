@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════════════
+#  持续集成：编译与单元测试
+#  仅包含 .NET 10 项目（App / Core / Hal / Tests）。net48 的安装器与
+#  绿色版启动器仅在打包时编译，且依赖 Windows SDK 组件，故不纳入 CI。
+#  CI 环境不存在自签名证书，Directory.Build.targets 会自动跳过签名。
+# ═══════════════════════════════════════════════════════════════
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: 编译与单元测试（Windows / .NET 10）
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: 编译主程序（WPF，含 Core 与 Hal）
+        run: dotnet build ControlCenter/src/QControl.App/QControl.App.csproj -c Release -p:SignBinaries=false
+
+      - name: 运行单元测试（离线，不需要硬件与管理权限）
+        run: dotnet test ControlCenter/tests/QControl.Tests/QControl.Tests.csproj -c Release -p:SignBinaries=false --logger "console;verbosity=normal"

@@ -1,0 +1,203 @@
+[
+ {
+  "profile": "quanta-nl5",
+  "override": null,
+  "writes_allowed": true,
+  "ec_capable": true,
+  "ec_default": true,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": true,
+   "fan_manual": true,
+   "fan_curve": true,
+   "fan_count": 2,
+   "perf_modes": [
+    "office",
+    "game",
+    "beast"
+   ],
+   "gfx_switch": true,
+   "keyboard_rgb": true,
+   "kb_zones": 3
+  },
+  "deny_hint": "EC 写入已在设置页关闭（「EC 控制」开关），风扇/背光/模式都不会下发。"
+ },
+ {
+  "profile": "quanta-nl5",
+  "override": true,
+  "writes_allowed": true,
+  "ec_capable": true,
+  "ec_default": true,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": true,
+   "fan_manual": true,
+   "fan_curve": true,
+   "fan_count": 2,
+   "perf_modes": [
+    "office",
+    "game",
+    "beast"
+   ],
+   "gfx_switch": true,
+   "keyboard_rgb": true,
+   "kb_zones": 3
+  },
+  "deny_hint": "EC 写入已在设置页关闭（「EC 控制」开关），风扇/背光/模式都不会下发。"
+ },
+ {
+  "profile": "quanta-nl5",
+  "override": false,
+  "writes_allowed": false,
+  "ec_capable": true,
+  "ec_default": true,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": false,
+   "fan_manual": false,
+   "fan_curve": false,
+   "fan_count": 2,
+   "perf_modes": [],
+   "gfx_switch": false,
+   "keyboard_rgb": false,
+   "kb_zones": 3
+  },
+  "deny_hint": "EC 写入已在设置页关闭（「EC 控制」开关），风扇/背光/模式都不会下发。"
+ },
+ {
+  "profile": "quanta-gmwmi-generic",
+  "override": null,
+  "writes_allowed": false,
+  "ec_capable": true,
+  "ec_default": false,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": false,
+   "fan_manual": false,
+   "fan_curve": false,
+   "fan_count": 2,
+   "perf_modes": [],
+   "gfx_switch": false,
+   "keyboard_rgb": false,
+   "kb_zones": 3
+  },
+  "deny_hint": "当前机型「未适配的广达机型（通用）」未适配，EC 写入默认关闭（识别依据：无）。确认风险后可在设置页「EC 控制」里手动打开。"
+ },
+ {
+  "profile": "quanta-gmwmi-generic",
+  "override": true,
+  "writes_allowed": true,
+  "ec_capable": true,
+  "ec_default": false,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": true,
+   "fan_manual": true,
+   "fan_curve": true,
+   "fan_count": 2,
+   "perf_modes": [
+    "office",
+    "game",
+    "beast"
+   ],
+   "gfx_switch": true,
+   "keyboard_rgb": true,
+   "kb_zones": 3
+  },
+  "deny_hint": "当前机型「未适配的广达机型（通用）」未适配，EC 写入默认关闭（识别依据：无）。确认风险后可在设置页「EC 控制」里手动打开。"
+ },
+ {
+  "profile": "quanta-gmwmi-generic",
+  "override": false,
+  "writes_allowed": false,
+  "ec_capable": true,
+  "ec_default": false,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": false,
+   "fan_manual": false,
+   "fan_curve": false,
+   "fan_count": 2,
+   "perf_modes": [],
+   "gfx_switch": false,
+   "keyboard_rgb": false,
+   "kb_zones": 3
+  },
+  "deny_hint": "当前机型「未适配的广达机型（通用）」未适配，EC 写入默认关闭（识别依据：无）。确认风险后可在设置页「EC 控制」里手动打开。"
+ },
+ {
+  "profile": "unsupported",
+  "override": null,
+  "writes_allowed": false,
+  "ec_capable": false,
+  "ec_default": false,
+  "caps": {
+   "ec": false,
+   "ec_switch": false,
+   "ec_read": false,
+   "writes": false,
+   "fan_manual": false,
+   "fan_curve": false,
+   "fan_count": null,
+   "perf_modes": [],
+   "gfx_switch": false,
+   "keyboard_rgb": false,
+   "kb_zones": 0
+  },
+  "deny_hint": "本机没有可用的 EC 命令表（识别为「未识别的机型」），控制中心不会向 EC 写入任何东西。"
+ },
+ {
+  "profile": "unsupported",
+  "override": true,
+  "writes_allowed": false,
+  "ec_capable": false,
+  "ec_default": false,
+  "caps": {
+   "ec": false,
+   "ec_switch": false,
+   "ec_read": false,
+   "writes": false,
+   "fan_manual": false,
+   "fan_curve": false,
+   "fan_count": null,
+   "perf_modes": [],
+   "gfx_switch": false,
+   "keyboard_rgb": false,
+   "kb_zones": 0
+  },
+  "deny_hint": "本机没有可用的 EC 命令表（识别为「未识别的机型」），控制中心不会向 EC 写入任何东西。"
+ },
+ {
+  "profile": "unsupported",
+  "override": false,
+  "writes_allowed": false,
+  "ec_capable": false,
+  "ec_default": false,
+  "caps": {
+   "ec": false,
+   "ec_switch": false,
+   "ec_read": false,
+   "writes": false,
+   "fan_manual": false,
+   "fan_curve": false,
+   "fan_count": null,
+   "perf_modes": [],
+   "gfx_switch": false,
+   "keyboard_rgb": false,
+   "kb_zones": 0
+  },
+  "deny_hint": "本机没有可用的 EC 命令表（识别为「未识别的机型」），控制中心不会向 EC 写入任何东西。"
+ }
+]

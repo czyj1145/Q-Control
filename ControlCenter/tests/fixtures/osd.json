@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "enabled": true,
+  "mode": "vendor_backlight",
+  "mode_error": null,
+  "media_keys": false,
+  "available": true,
+  "error": null,
+  "events": 0,
+  "hotkey": {
+    "available": true,
+    "running": true,
+    "count": 0,
+    "last": null,
+    "error": null
+  },
+  "cbwmi": {
+    "available": true,
+    "running": true,
+    "count": 0,
+    "fan_events": 0,
+    "last": null,
+    "last_detail": null,
+    "error": null
+  },
+  "fan_hw_max": null,
+  "vendor": [
+    "HkeyUserPS.exe",
+    "HkeyOSDSvis.exe",
+    "ControlCenterDaemon.exe"
+  ],
+  "recent": []
+}

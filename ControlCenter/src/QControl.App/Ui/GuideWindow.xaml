@@ -1,0 +1,110 @@
+<Window x:Class="QControl.App.Ui.GuideWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="引导适配"
+        Width="352" SizeToContent="Height"
+        WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="Manual"
+        ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        Background="{DynamicResource BgBrush}"
+        FontFamily="{DynamicResource UiFont}" FontSize="14"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display">
+
+  <!--
+    引导适配的**独立置顶小窗**（2026-11-13）。
+
+    为什么不是内嵌面板：用户这几步要在**原厂控制中心**里操作，那时 Q-Control
+    主窗口多半被压在后面；面板埋在「关于」页里，用户得来回 Alt-Tab 才点得到一次。
+    小窗置顶 + ShowActivated=False（不抢原厂窗口的焦点），用户余光就能看到下一步。
+
+    ⚠️ 2026-11-17 起**只在轮到用户操作时才弹出**（观察真的开始了）：
+       采集前那 30 多秒（读机型 / 采样 / 读显卡）由主界面的五段进度交代，
+       不必让一个还没用的空窗压在原厂窗口上面。
+
+    刻意做得很窄、可拖动：置顶窗最怕挡住原厂里正好要点的那个按钮。默认落在
+    工作区右上角，标题栏按住即可挪走（只能拖标题栏，拖整张卡会吃掉按钮点击）。
+    与主窗口一样用 WindowChrome 无边框，不用 AllowsTransparency —— 后者会关掉
+    硬件合成，还会带来 DPI 白边（见 MainWindow.xaml 的注释）。
+  -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" CornerRadius="0"
+                  GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+  </WindowChrome.WindowChrome>
+
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Window.Resources>
+
+  <Border Style="{StaticResource CardBox}" Margin="6" Padding="14">
+    <StackPanel>
+      <Grid x:Name="DragBar" Background="Transparent" Cursor="SizeAll"
+            MouseLeftButtonDown="DragBar_MouseDown"
+            ToolTip="按住拖动，把小窗挪到不挡原厂窗口的地方">
+        <TextBlock Text="引导适配" Style="{StaticResource CardTitle}" Margin="0"/>
+        <TextBlock x:Name="StepNo" Text="1/5" HorizontalAlignment="Right"
+                   VerticalAlignment="Center" Style="{StaticResource SetDesc}" Margin="0"/>
+      </Grid>
+
+      <!-- 五段步骤条（2026-11-17）：哪几步做完了、现在在第几步，一眼看完。
+           原来那行「1 办公 ✓ · 2 游戏 ✓ · …」在小窗里要读两遍才理清顺序。
+           格子均分，悬停显示该步全名与状态。 -->
+      <Grid Height="4" Margin="0,10,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border x:Name="StepSeg1" Grid.Column="0" Margin="0,0,3,0" CornerRadius="2"
+                Background="{DynamicResource LineBrush}"/>
+        <Border x:Name="StepSeg2" Grid.Column="1" Margin="0,0,3,0" CornerRadius="2"
+                Background="{DynamicResource LineBrush}"/>
+        <Border x:Name="StepSeg3" Grid.Column="2" Margin="0,0,3,0" CornerRadius="2"
+                Background="{DynamicResource LineBrush}"/>
+        <Border x:Name="StepSeg4" Grid.Column="3" Margin="0,0,3,0" CornerRadius="2"
+                Background="{DynamicResource LineBrush}"/>
+        <Border x:Name="StepSeg5" Grid.Column="4" CornerRadius="2"
+                Background="{DynamicResource LineBrush}"/>
+      </Grid>
+
+      <TextBlock x:Name="StepTitle" Text="办公 / 静音档" Style="{StaticResource SetTitle}"
+                 Margin="0,12,0,0" TextWrapping="Wrap"/>
+      <TextBlock x:Name="StepHint" Text="在原厂里切到最省电那档" Style="{StaticResource SetDesc}"
+                 Margin="0,3,0,0" TextWrapping="Wrap"/>
+      <TextBlock x:Name="Frames" Text="还没抓到写命令" Style="{StaticResource SetDesc}"
+                 Margin="0,10,0,0" TextWrapping="Wrap"/>
+
+      <!-- 按钮两行**固定不变**（2026-11-17 用户报「按钮错位」）：
+           原来五颗挤在 WrapPanel 里，「再等 60 秒」一出现就把行尾那颗挤到下一行，
+           行数、列数跟着状态跳。现在主/次分两排、每排等宽，「再等 60 秒」恒在，
+           只在不能点的时候置灰 —— 位置永远不挪。 -->
+      <UniformGrid Columns="2" Margin="0,12,0,0">
+        <Button x:Name="DoneButton" Content="完成这步"
+                Style="{StaticResource MiniButtonAccent}" Margin="0,0,4,0" Click="Done_Click"
+                ToolTip="在原厂里真的切过去了再点：这一步的时间窗靠这次点击切段"/>
+        <Button x:Name="SkipButton" Content="没有这项"
+                Style="{StaticResource MiniButton}" Margin="4,0,0,0" Click="Skip_Click"
+                ToolTip="这项原厂里没有 —— 按没有处理，不硬猜"/>
+      </UniformGrid>
+
+      <UniformGrid Columns="3" Margin="0,8,0,0">
+        <Button x:Name="BackButton" Content="上一步"
+                Style="{StaticResource MiniButton}" Margin="0,0,3,0" Click="Back_Click" IsEnabled="False"
+                ToolTip="点错了或这一步没抓到写命令：退回重做"/>
+        <Button x:Name="ExtendButton" Content="再等 60 秒"
+                Style="{StaticResource MiniButton}" Margin="3,0,3,0" Click="Extend_Click"
+                ToolTip="观察窗口到点就按「没做到」收尾：这一步还没做完就点它，把窗口往后推 60 秒（可点多次）"/>
+        <Button x:Name="StopButton" Content="结束"
+                Style="{StaticResource MiniButton}" Margin="3,0,0,0" Click="Stop_Click"
+                ToolTip="剩下的步骤不做了，提前结束观察、直接生成档案"/>
+      </UniformGrid>
+
+    </StackPanel>
+  </Border>
+</Window>

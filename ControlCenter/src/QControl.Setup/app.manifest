@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+
+  <assemblyIdentity version="1.0.0.0" name="QControl.Setup" type="win32" />
+
+  <!--
+    为什么 requireAdministrator：安装要写 %ProgramFiles%、HKLM 的卸载项、
+    以及 %ProgramData% 下的配置目录；卸载还要删计划任务 —— 全都是需要提权的操作。
+
+    这也是**全流程只有一次 UAC** 的地方：装完之后，主程序自己会先试那个
+    HighestAvailable 计划任务（任务计划服务代启，零 UAC），没有任务才提权一次
+    （详见 QControl.Hal/Sys/Autostart.cs 的零 UAC 通道）。
+
+    ⚠️ 注释里绝对不能出现连续两个减号：XML 规范禁止 comment 内含双连字符，
+       SxS 解析时会直接判「无效的 Xml 语法」，exe 双击只会弹"并行配置不正确"。
+       也别写命令行开关的原文，改成文字描述。
+  -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <!-- 高分屏不糊：PerMonitorV2，与主程序界面一致 -->
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
+
+</assembly>

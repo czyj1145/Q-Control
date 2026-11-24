@@ -1,0 +1,43 @@
+<Project>
+
+  <!--
+    版本号的**唯一真源**是 `ControlCenter/VERSION`（一行，如 0.1.0）。
+    这里把它灌进每个项目的 <Version>，于是 exe/dll 的「属性 → 详细信息」、
+    文件版本、以及安装包的显示版本全都同源，不会出现"程序里写 0.1.0、
+    安装包写 0.2.0"这种对不上的情况。
+
+    发版时只改 VERSION 一个文件，然后跑 src\pack-release.cmd。
+
+    ⚠️ VERSION 只写三段（major.minor.patch）。写成四段会让 SDK 生成的
+       AssemblyVersion 变成五段而报错。
+    ⚠️ 读不到 VERSION（比如别人只拷了 src 目录）就退到 0.0.0 —— 构建照常成功，
+       因为"版本号缺失"不该拦住编译。
+  -->
+  <PropertyGroup>
+    <QControlVersionFile>$(MSBuildThisFileDirectory)..\VERSION</QControlVersionFile>
+    <QControlVersion Condition="Exists('$(QControlVersionFile)')">$([System.IO.File]::ReadAllText('$(QControlVersionFile)').Trim())</QControlVersion>
+    <QControlVersion Condition="'$(QControlVersion)' == ''">0.0.0</QControlVersion>
+
+    <Version>$(QControlVersion)</Version>
+    <Product>Q-Control 控制中心</Product>
+    <Company>The QControl Authors</Company>
+    <Copyright>MIT License · The QControl Authors</Copyright>
+    <NeutralLanguage>zh-Hans</NeutralLanguage>
+  </PropertyGroup>
+
+  <!--
+    **只保留中文附属程序集**（2026-10-25 加，2026-10-28 重新说明）。
+
+    自包含发布会把 .NET 运行时 + WPF 的卫星程序集（`*.resources.dll`）按语言整套拷出来：
+    13 个语言目录 × 12 个 dll = 156 个文件 / 8.3 MB，而里面全是框架内部异常消息和系统
+    对话框的翻译（我们自己的界面文案是 C# 中文字面量，不走 resx）。
+
+    ⚠️ 2026-10-28 起发布改成**框架依赖**，框架文件不再进包，这条设置对产物已经**没有影响**
+       —— 留着是因为它零成本，而且万一哪天回到自包含，它能挡掉那 130 个用不上的文件。
+       别把它当"省体积的手段"：真正的体积在 coreclr + WPF 本体上，靠参数的收益 <25 MB。
+  -->
+  <PropertyGroup>
+    <SatelliteResourceLanguages>zh-Hans;zh-Hant</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+</Project>

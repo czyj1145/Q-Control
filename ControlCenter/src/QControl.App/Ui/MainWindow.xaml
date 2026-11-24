@@ -1,0 +1,166 @@
+<Window x:Class="QControl.App.Ui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Q-Control 控制中心"
+        Width="1320" Height="880" MinWidth="980" MinHeight="640"
+        WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}"
+        FontFamily="{DynamicResource UiFont}" FontSize="14"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        Icon="/QControl;component/Assets/qcontrol.ico">
+
+  <!--
+    窗口外壳：左侧 84px 图标栏 + 右侧（顶栏 + 页面）。
+
+    为什么 WindowStyle=None 而不是留系统标题栏：
+      应用自己的顶栏里已经有"当前页 + 四个状态胶囊"，再叠一条系统标题栏就是两行标题。
+      用 WindowChrome（**不是** AllowsTransparency=true）拿无边框 + 完整保留系统缩放/贴边（Aero Snap）/
+      最大化动画 —— AllowsTransparency 会关掉硬件合成、还会让 DPI 与白边处理变麻烦，这里刻意不用。
+
+    ⚠️ CaptionHeight=0：让整个顶栏都不算"标题栏区域"，否则胶囊上的交互（将来有可点的"退出"）
+       会被系统当成拖拽吞掉。拖拽改成顶栏 MouseLeftButtonDown → DragMove()（见 code-behind）。
+    ⚠️ 背景那两团光是 Ellipse + RadialGradientBrush，不是模糊滤镜：CSS 的 backdrop-filter
+       在这个窗口里没有等价物，硬做要挂 DWM 亚克力（Win10 还不支持），不值得。
+  -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="0"
+                  GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+  </WindowChrome.WindowChrome>
+
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Window.Resources>
+
+  <Grid>
+    <!-- 背景层：底色渐变 + 左上偏紫、右上偏青的两团流光（CSS 变量 bg 的两个 radial-gradient） -->
+    <Rectangle Fill="{DynamicResource BgGradBrush}"/>
+    <Grid ClipToBounds="True">
+      <Ellipse Width="900" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Margin="-140,-260,0,0" Fill="{DynamicResource GlowPrimaryBrush}"/>
+      <Ellipse Width="800" Height="460" HorizontalAlignment="Right" VerticalAlignment="Top"
+               Margin="0,-180,-100,0" Fill="{DynamicResource GlowSecondaryBrush}"/>
+    </Grid>
+
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="84"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- ==================== 侧栏 ==================== -->
+      <!-- 侧栏右侧圆角 14（对应 CSS 的 border-radius:0 14px 14px 0） -->
+      <Border Grid.Column="0" Background="{DynamicResource RailBrush}"
+              BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0"
+              CornerRadius="0,14,14,0">
+        <Grid Margin="10,12,10,12">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <!-- 品牌：只剩一枚 logo，机型全留在悬停提示里
+               ⚠️ 字形是 **Q**（2026-10-23 用户要求把「星」换掉）—— 不是字体里的字母，
+                  是画出来的圆环 + 穿心尾巴：设计空间 16×16，数字与
+                  `spike/_gen_app_icon.py`、`Tray/TrayIcon.BuildGlyphIcon` 同源，
+                  改字形要三处一起改（否则侧栏 / 托盘 / exe 图标会长得不一样）。
+
+               ⚠️ **不用 Viewbox，且 Ellipse 的 Width/Height 要按「墨迹外径」填**
+                  （2026-10-23 尾修「侧栏 logo 没居中」）：WPF 的 Shape 是 Stretch=Fill 语义，
+                  **描边画在布局框内**（不像 Canvas 坐标那样以几何线为中心往两边摊）——
+                  所以 `Ellipse Width=11.2 StrokeThickness=2.8` 出来的是 11.2px 的墨迹，
+                  不是 11.2+2.8=14。这就是之前「字形偏小又偏右下」的根因：
+                  按中心线半径算的框，实际被描边吃掉了一圈。
+                  现在按 **32×32 的 Canvas + 坐标直接乘 k=1.10** 落地（1 单位 = 1 像素）：
+                  碗的墨迹外径 15.4 = 2×(中心线 6.16 + 半描边 1.54)，其布局框左上 = 中心 − 7.7。
+                  墨迹中心落在 (16,16)（设计 8.725 × 1.10 反推 → 碗心 15.203）。 -->
+          <Border Grid.Row="0" Width="32" Height="32" CornerRadius="11"
+                  HorizontalAlignment="Center" Background="{DynamicResource LogoBrush}"
+                  ToolTip="Q-Control 控制中心 —— Colorful G16 Pro · i9-13900HX · RTX 5070 Ti">
+            <Canvas Width="32" Height="32" ClipToBounds="False">
+              <!-- 碗：中心线半径 5.6×1.10=6.16，描边 2.8×1.10=3.08 ⇒ 墨迹外径 15.4 -->
+              <Ellipse Canvas.Left="7.503" Canvas.Top="7.503" Width="15.4" Height="15.4"
+                       Stroke="#0B0D12" StrokeThickness="3.08"/>
+              <!-- 尾巴：设计 (10.263,10.263)→(15.2,15.2)，宽 2.5，圆头（Line 的描边是居中的） -->
+              <Line X1="17.692" Y1="17.692" X2="23.123" Y2="23.123"
+                    Stroke="#0B0D12" StrokeThickness="2.75"
+                    StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            </Canvas>
+          </Border>
+
+          <!-- 业务页导航（6 项，等分剩余高度 —— 对应 .nav 的 space-evenly） -->
+          <Grid x:Name="NavHost" Grid.Row="1" Margin="0,10,0,0"/>
+
+          <!-- 底部固定区：白天/黑夜 → 关于 → 设置（顺序是用户定的，别调） -->
+          <StackPanel Grid.Row="2" x:Name="FootHost"/>
+        </Grid>
+      </Border>
+
+      <!-- ==================== 右侧 ==================== -->
+      <Grid Grid.Column="1">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Height="56" Background="{DynamicResource TopbarBrush}"
+                BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="Topbar_MouseDown">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 标题 + 副标题：用 Grid（Auto/*）而不是横向 StackPanel —— StackPanel 在 measure
+                 阶段给子元素无限宽度，副标题就只会被父级硬裁掉（右边切半个字），
+                 有了星号列 + TextTrimming 才会变成规整的省略号。 -->
+            <!-- ⚠️ 这一条**没有动效**了（2026-10-28 用户要求删掉全部装饰过渡）：
+                 翻页**瞬时**到位，没有淡入/位移。
+                 x:Name 留着是因为标题/副标题由 code-behind 直接写（ShowPage），与动效无关。 -->
+            <Grid x:Name="PageHeader" VerticalAlignment="Center" Margin="18,0,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="PageTitle" Text="总览" FontSize="15" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TxtBrush}"/>
+              <TextBlock x:Name="PageDesc" Grid.Column="1" Text="处理器 / 显卡 / 温度趋势"
+                         FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis"
+                         Foreground="{DynamicResource DimBrush}"/>
+            </Grid>
+
+            <!-- 状态胶囊由 code-behind 填（顺序：CPU / GPU / 风扇 / EC / 警告） -->
+            <StackPanel x:Name="ChipHost" Grid.Column="1" Orientation="Horizontal"
+                        VerticalAlignment="Center" Margin="0,0,6,0"/>
+
+            <!-- 标题栏按钮：系统窗口按钮在无边框模式下就靠这三颗 -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+              <Button x:Name="MinButton" Style="{StaticResource CaptionButton}"
+                      Content="&#xE921;" Click="Minimize_Click" ToolTip="最小化"/>
+              <Button x:Name="MaxButton" Style="{StaticResource CaptionButton}"
+                      Content="&#xE922;" Click="Maximize_Click" ToolTip="最大化"/>
+              <Button x:Name="CloseButton" Style="{StaticResource CaptionCloseButton}"
+                      Content="&#xE8BB;" Click="Close_Click" ToolTip="关闭（控制中心转到托盘继续跑）"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <ContentControl x:Name="PageHost" Grid.Row="1" Focusable="False"/>
+      </Grid>
+    </Grid>
+
+    <!--
+      叠层：提示条（toast）与模态确认框都挂这里，覆盖整窗。
+      ⚠️ 平时没有任何子元素，所以不吃点击（页面照常可点）；子元素自己决定是否挡交互。
+    -->
+    <Grid x:Name="OverlayHost" Panel.ZIndex="10" ClipToBounds="True"/>
+  </Grid>
+</Window>

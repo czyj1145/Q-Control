@@ -1,0 +1,161 @@
+<Window x:Class="QControl.Boot.Ui.BootWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal"
+        Title="Q-Control 控制中心"
+        Width="560" Height="336"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        FontFamily="Microsoft YaHei UI, Segoe UI" FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <!--
+      ==========================================================================
+       绿色版引导器唯一的窗口（2026-10-29）。
+       只在"本机缺 .NET 10 桌面运行时"时出现 —— 运行时齐了就一个窗口都不弹。
+       配色/按钮/进度条全部来自安装器那份 SetupStyles.xaml（见 csproj 的 Resource Link），
+       所以安装向导和这里的观感永远一致。
+      ==========================================================================
+    -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="SetupStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                <Setter Property="Width" Value="28" />
+                <Setter Property="Height" Value="28" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{StaticResource BDim}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border CornerRadius="12" Background="{StaticResource BPanel}"
+            BorderBrush="{StaticResource BLine}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="28" ShadowDepth="8" Opacity="0.55" Color="#000000" />
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ======================================================== 顶栏 -->
+            <Grid Grid.Row="0" Margin="26,22,18,0" Background="Transparent"
+                  MouseLeftButtonDown="OnHeaderDrag">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Image Width="44" Height="44" Source="/Assets/qcontrol.ico"
+                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Top" />
+
+                <StackPanel Grid.Column="1" Margin="14,0,44,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="HeadTitle" Text="缺 .NET 10 桌面运行时"
+                               FontSize="17" FontWeight="SemiBold"
+                               Foreground="{StaticResource BText}" />
+                    <TextBlock x:Name="SubTitle" Margin="0,5,0,0"
+                               FontSize="12" Foreground="{StaticResource BDim}" />
+                </StackPanel>
+
+                <Button Grid.Column="1" x:Name="CloseBtn" Content="✕"
+                        Style="{StaticResource CloseButton}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Click="OnCloseClick" />
+            </Grid>
+
+            <!-- ======================================================== 主体 -->
+            <Grid Grid.Row="1" Margin="26,16,26,0">
+
+                <!-- ============================ ① 提示安装 -->
+                <StackPanel x:Name="PromptPanel" VerticalAlignment="Center">
+                    <TextBlock TextWrapping="Wrap" LineHeight="21"
+                               FontSize="12.5" Foreground="{StaticResource BDim}"
+                               Text="Q-Control 本体只有 2 MB，运行时（约 57 MB）故意没有跟着打包 —— 装进去会让下载体积多出 130 多 MB。它装一次就够，之后升级版本、换目录都不用再管。" />
+
+                    <Border Margin="0,14,0,0" CornerRadius="8" Background="{StaticResource BCard}"
+                            BorderBrush="{StaticResource BLine}" BorderThickness="1" Padding="13,11">
+                        <StackPanel>
+                            <TextBlock FontSize="12" Foreground="{StaticResource BText}"
+                                       Text="装到 C:\Program Files\dotnet，需要管理员权限（会弹一次授权）" />
+                            <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" FontSize="11.5"
+                                       Foreground="#6f7c90"
+                                       Text="连不上网？把 windowsdesktop-runtime-10.x.x-win-x64.exe 放进本文件夹，再点「自动下载并安装」即可，不必等下载。" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ============================ ② 下载/安装 -->
+                <StackPanel x:Name="ProgressPanel" VerticalAlignment="Center" Visibility="Collapsed">
+                    <TextBlock x:Name="StatusText" Text="正在准备…" TextWrapping="Wrap"
+                               FontSize="14" Foreground="{StaticResource BText}" />
+                    <ProgressBar x:Name="Bar" Margin="0,16,0,0" Height="6" Maximum="100"
+                                 Style="{StaticResource DarkProgress}" />
+                    <TextBlock x:Name="DetailText" Margin="0,11,0,0" TextWrapping="Wrap"
+                               FontSize="12" Foreground="{StaticResource BDim}" />
+                </StackPanel>
+
+                <!-- ============================ ③ 失败 -->
+                <StackPanel x:Name="FailPanel" VerticalAlignment="Center" Visibility="Collapsed">
+                    <ScrollViewer MaxHeight="128" VerticalScrollBarVisibility="Auto">
+                        <TextBlock x:Name="ErrorText" TextWrapping="Wrap" LineHeight="20"
+                                   FontSize="12" Foreground="{StaticResource BDim}" />
+                    </ScrollViewer>
+                    <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="11.5"
+                               Foreground="#6f7c90"
+                               Text="这一步失败不影响已经解压的程序。自己到官网下载「Windows 桌面运行时 10.0.x · x64」装好，再双击 Q-Control.exe 就行。" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ======================================================== 底栏 -->
+            <Border Grid.Row="2" Margin="0,16,0,0" Padding="26,14"
+                    BorderThickness="0,1,0,0" BorderBrush="{StaticResource BLine}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <!-- 左侧提示只占剩余宽度：否则长句子会压到按钮底下（2026-10-29 截图里真发生了） -->
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="FootHint" Grid.Column="0" VerticalAlignment="Center"
+                               Margin="0,0,12,0" TextTrimming="CharacterEllipsis"
+                               FontSize="11.5" Foreground="#6f7c90" />
+
+                    <StackPanel x:Name="PromptButtons" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="ExitBtn" Content="退出" Width="84" Height="36"
+                                Style="{StaticResource GhostButton}" Click="OnExitClick" />
+                        <Button x:Name="WebBtn" Content="打开官网下载页" Width="150" Height="36"
+                                Margin="10,0,0,0" Style="{StaticResource GhostButton}" Click="OnWebClick" />
+                        <Button x:Name="InstallBtn" Content="自动下载并安装" Width="158" Height="36"
+                                Margin="10,0,0,0" Style="{StaticResource PrimaryButton}" Click="OnInstallClick" />
+                    </StackPanel>
+
+                    <StackPanel x:Name="ProgressButtons" Grid.Column="1" Orientation="Horizontal"
+                                HorizontalAlignment="Right" Visibility="Collapsed">
+                        <Button x:Name="CancelBtn" Content="取消" Width="84" Height="36"
+                                Style="{StaticResource GhostButton}" Click="OnCancelClick" />
+                    </StackPanel>
+
+                    <StackPanel x:Name="FailButtons" Grid.Column="1" Orientation="Horizontal"
+                                HorizontalAlignment="Right" Visibility="Collapsed">
+                        <Button x:Name="ExitBtn2" Content="退出" Width="84" Height="36"
+                                Style="{StaticResource GhostButton}" Click="OnExitClick" />
+                        <Button x:Name="WebBtn2" Content="打开官网下载页" Width="150" Height="36"
+                                Margin="10,0,0,0" Style="{StaticResource GhostButton}" Click="OnWebClick" />
+                        <Button x:Name="RetryBtn" Content="重试" Width="108" Height="36"
+                                Margin="10,0,0,0" Style="{StaticResource PrimaryButton}" Click="OnInstallClick" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

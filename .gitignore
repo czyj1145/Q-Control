@@ -1,0 +1,137 @@
+# ═══════════════════════════════════════════════════════════════
+#  Q-Control 控制中心 · 忽略规则
+#  仓库根 = 工作区根（所以路径要带 ControlCenter/ 前缀）
+#  原则：固件 dump / 日志 / 调试产物 / 第三方二进制 / 运行时配置 一律不入库
+# ═══════════════════════════════════════════════════════════════
+
+# ── 逆向产物：固件反编译 dump（89 MB，且厂商固件版权不清）──
+recon/acpi/
+
+# ── recon/ 下所有下划线开头文件：原厂二进制抽串 + 临时脚本 ──
+#    含 _vendor_*.txt / _wsaa_probe.txt / _tmp_*.py / _switch_out.txt
+#    ⚠️ 别写全局 `_*` —— ControlCenter/spike 下的 `_gen_*.py` 是要入库的
+recon/_*
+recon/iasl.zip
+
+# ── 日志（含本机绝对路径）──
+*.log
+
+# ── 运行时日志目录：整目录不入库 ──
+#    ⚠️ 只写 `*.log` 拦不住：MachineReport 还会往这里落 adopt-*.json / adopt-*.txt，
+#    里面是序列号 / UUID / 主机名 / 网卡 MAC 这类本机标识（2026-10-23 差点被
+#    `git add -A` 收走）。
+ControlCenter/logs/
+
+# ── 历史采样档（2026-10-31）：跑起来就每 5 秒一行，整目录不入库 ──
+#    内容是本机温度/转速/功耗曲线，体积每天约 1 MB，属于运行时数据而非源码。
+ControlCenter/history/
+
+# ── 脚本缓存（recon/ 下的 .py 工具会生成）──
+__pycache__/
+*.py[cod]
+
+# ── ControlCenter 根下的截图/取证（含硬件页，会露真序列号/UUID/主机名，勿入库）──
+#    与根 /_*.png 同一意图；截图整类不进仓库（README 不放截图，2026-10-25 定）
+ControlCenter/_*.png
+
+# ── 开发期一次性脚本（已从仓库下架；磁盘上也不再保留）──
+#    只对本地素材/本机取证有用，对外是噪音。
+
+# ── 第三方二进制：改由 README 指向官方发布页 ──
+tools/lhm.zip
+
+# ── 第三方二进制：HWiNFO 便携版（11 MB，随项目分发但不入库）──
+#    2026-10-13 起传感器统一走它的共享内存；控制中心从本目录拉起，
+#    磁盘上留着，git 里只留说明（README 指向官方发布页）。
+tools/HWiNFO/
+
+# ── 探针一次性输出（regenerable：重跑 recon/probes/ 下的脚本即可）──
+ControlCenter/_*.out
+
+# ── 图标预览（`spike/_gen_app_icon.py` 每次都重写：各尺寸档 + 深/浅底两张）──
+#    ico 本体在 ControlCenter/src/QControl.App/Assets/ 里，**是要入库的**
+ControlCenter/_icon_preview/
+
+# ── UI 校验产物目录（2026-10-21 起 WPF 时期新增）──
+#    _shots_after/  `--ui-shot` 成批出图
+#    _lightscan/    逐页 × 明暗的主题扫描
+#    _render-check/ 渲染核对
+#    同一意图：会反复再生，且里面的硬件页带真序列号；README 要的干净图脱敏后另放 docs/
+ControlCenter/_shots_after/
+ControlCenter/_lightscan/
+ControlCenter/_render-check/
+
+# ── 一次性编译输出：绕开运行中实例锁（exe/dll 被占时用
+#    `dotnet build -p:BaseOutputPath=_tmp/ccbuild` 换个地方落地）──
+#    会出现在任何一个项目目录下（`_tmp/ccbuildRelease/net10.0-windows` 等）
+**/_tmp/
+
+# ── A/B 抓包原始样本（各 200~400 KB，重新抓一次就有）──
+#    原始 JSON 里有本机序列号/主机名，只入库结论。
+ControlCenter/_ab_*.json
+
+# ── 根目录截屏取证（ tray 调查等，可能含隐私内容，不入库）──
+/_*.png
+
+# ── 运行时用户配置（本机状态，程序首次运行才生成）──
+ControlCenter/model.json
+
+# ── 本地工具目录（不入库）──
+buddyToken/
+.workbuddy/
+_backup/
+
+# ── .NET 编译产物（P0 spike 起；未来 src/ 同样适用）──
+#    仓库里目前没有任何需要入库的 bin/obj 目录，规则可以放宽到任意层级
+**/bin/
+**/obj/
+*.user
+
+# ── 临时/备份文件（编辑器、补丁脚本、合并冲突留下的）──
+#    2026-10-23 踩到：批量改启动脚本时留了 run-silent.wsf.bak，
+#    差一点被 `git add -A` 收进仓库
+*.bak
+*.orig
+*.rej
+
+# ── 代码签名私钥（2026-10-24 加：自签证书 + 密码，绝不能入库）──
+#    scripts/make-cert.ps1 生成；sign.ps1 / Directory.Build.targets 读取。
+#    CI 或协作者各自跑一次 make-cert.ps1 即可，无需共享私钥。
+ControlCenter/scripts/*.pfx
+ControlCenter/scripts/pfx-password.txt
+
+# ── 发版产物（2026-10-25：pack-release.cmd 的输出，约 190 MB，绝不入库）──
+#    dist\ 里是安装包 + 绿色版 + 中间载荷，随时可以重新生成：src\pack-release.cmd
+ControlCenter/dist/
+
+# ── B 站推广文案（2026-10-24：本地宣传稿，不上 GitHub，保持仓库纯技术内容）──
+docs/B站文案-QControl.md
+
+# ── 开发记录（2026-10-25：过程材料，本地保留、不入库）──
+#    仓库只放成品与技术结论（README / PROTOCOL / DEVICES / recon 工具与探针）；
+#    分阶段开发日志、迁移方案、A-B 对账、路线图、专项挖掘记录一律只留本机。
+#    ⚠️ 这些文件**曾被跟踪**，单加 ignore 不生效，必须 `git rm --cached` 才算下架。
+ControlCenter/src/README.md
+ControlCenter/REWRITE-PLAN.md
+ControlCenter/ROADMAP.md
+ControlCenter/P7-AB-REPORT.md
+recon/led-channel-dig-*.md
+
+# ── 开发过程材料：只在本地，不上传（2026-11-24）──
+#    逆向探针与证据链属"怎么摸出来的"过程记录；协议结论本身是公开的（docs/PROTOCOL.md）。
+#    ⚠️ 单加 ignore 对**已被跟踪**的文件无效，必须同时 `git rm --cached`。
+recon/
+docs/EVIDENCE.md
+
+# ── IDE 状态与测试产物（2026-11-07 公开后补充：协作者克隆仓库后即会产生）──
+#    Visual Studio / Rider 的本地缓存与 `dotnet test` 的报告，不含源码，
+#    但会包含本机绝对路径，不应进入公开仓库。
+**/.vs/
+**/.idea/
+**/TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# WPF 编译期临时工程（每次构建生成、随机构名，绝不入库）
+*_wpftmp.csproj

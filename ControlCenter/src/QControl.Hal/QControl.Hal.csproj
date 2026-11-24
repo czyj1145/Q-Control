@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Hal 是**唯一允许碰 Windows API 的库**。Core 是 net10.0（不带 -windows），
+         这里才带 —— 分层靠 TFM 强制，不靠口头约定。 -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>QControl.Hal</RootNamespace>
+    <AssemblyName>QControl.Hal</AssemblyName>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QControl.Core\QControl.Core.csproj" />
+  </ItemGroup>
+
+</Project>

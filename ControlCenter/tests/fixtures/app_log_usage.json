@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "dir": "C://ControlCenter//logs",
+  "files": 0,
+  "bytes": 0,
+  "cc_files": 0,
+  "cc_bytes": 0,
+  "old_files": 0,
+  "old_bytes": 0,
+  "cap_files": 0,
+  "cap_bytes": 0,
+  "pack_files": 2,
+  "pack_bytes": 12034,
+  "pack_names": [
+    "adopt-G16-Pro-20261108-150117.json",
+    "adopt-G16-Pro-20261108-150117.txt"
+  ],
+  "profile_dir": "C://ControlCenter//devices",
+  "profile_files": 1,
+  "profile_bytes": 8642,
+  "profile_names": [
+    "quanta-nl5.json"
+  ],
+  "profile_cleanable": true
+}

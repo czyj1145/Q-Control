@@ -1,0 +1,285 @@
+{
+ "backlight": {
+  "addr": 6,
+  "effect": 1,
+  "rgb": [
+   255,
+   255,
+   255
+  ],
+  "zone_addrs_confirmed": true,
+  "zones": [
+   {
+    "addr": 5,
+    "name": "A",
+    "rgb": [
+     255,
+     0,
+     0
+    ]
+   },
+   {
+    "addr": 4,
+    "name": "B",
+    "rgb": [
+     0,
+     255,
+     0
+    ]
+   },
+   {
+    "addr": 3,
+    "name": "C",
+    "rgb": [
+     0,
+     0,
+     255
+    ]
+   }
+  ],
+  "custom_override": false
+ },
+ "ec": {
+  "enabled": null,
+  "gap": 0.45
+ },
+ "fan": {
+  "bind_mode": true,
+  "curve": [
+   {
+    "d": 35,
+    "t": 50
+   },
+   {
+    "d": 50,
+    "t": 62
+   },
+   {
+    "d": 68,
+    "t": 72
+   },
+   {
+    "d": 85,
+    "t": 82
+   },
+   {
+    "d": 100,
+    "t": 90
+   }
+  ],
+  "curve_enabled": false,
+  "enabled": false,
+  "fixed_mode": null,
+  "hysteresis": 2.0,
+  "max_duty": 100,
+  "min_duty": 30,
+  "min_interval": 6.0,
+  "mode": "auto",
+  "source": "cpu",
+  "temp_wall": 95
+ },
+ "hwinfo": {
+  "mode": "ondemand",
+  "idle_sec": 60
+ },
+ "light": {
+  "auto_off_min": 0,
+  "auto_off_on_lock": false
+ },
+ "gfx": {
+  "modes": {
+   "1": {
+    "code": 1,
+    "desc": "核显负责输出、独显按需参与渲染（日常省电）",
+    "name": "混合输出",
+    "short": "混合"
+   },
+   "2": {
+    "code": 2,
+    "desc": "显示输出直连独显，核显被固件隐藏（游戏最高帧）",
+    "name": "独显直连",
+    "short": "独显"
+   },
+   "3": {
+    "code": 3,
+    "desc": "只用核显、独显不参与（最省电；本界面将读不到 NVIDIA 数据）",
+    "name": "集显输出",
+    "short": "集显"
+   }
+  }
+ },
+ "perf": {
+  "auto_office_on_battery": true,
+  "last_mode": null,
+  "modes": {
+   "beast": {
+    "apmd": 0,
+    "dat2": 0,
+    "fan": {
+     "cpu": [
+      {
+       "d": 40,
+       "t": 50
+      },
+      {
+       "d": 55,
+       "t": 60
+      },
+      {
+       "d": 75,
+       "t": 70
+      },
+      {
+       "d": 95,
+       "t": 82
+      },
+      {
+       "d": 100,
+       "t": 90
+      }
+     ],
+     "gpu": [
+      {
+       "d": 40,
+       "t": 50
+      },
+      {
+       "d": 55,
+       "t": 60
+      },
+      {
+       "d": 75,
+       "t": 70
+      },
+      {
+       "d": 95,
+       "t": 82
+      },
+      {
+       "d": 100,
+       "t": 90
+      }
+     ]
+    },
+    "plan": "高性能"
+   },
+   "game": {
+    "apmd": 1,
+    "dat2": 1,
+    "fan": {
+     "cpu": [
+      {
+       "d": 35,
+       "t": 50
+      },
+      {
+       "d": 50,
+       "t": 62
+      },
+      {
+       "d": 68,
+       "t": 72
+      },
+      {
+       "d": 85,
+       "t": 82
+      },
+      {
+       "d": 100,
+       "t": 90
+      }
+     ],
+     "gpu": [
+      {
+       "d": 35,
+       "t": 50
+      },
+      {
+       "d": 50,
+       "t": 62
+      },
+      {
+       "d": 68,
+       "t": 72
+      },
+      {
+       "d": 85,
+       "t": 82
+      },
+      {
+       "d": 100,
+       "t": 90
+      }
+     ]
+    },
+    "plan": "游戏"
+   },
+   "office": {
+    "apmd": 2,
+    "dat2": 2,
+    "fan": {
+     "cpu": [
+      {
+       "d": 30,
+       "t": 50
+      },
+      {
+       "d": 38,
+       "t": 60
+      },
+      {
+       "d": 50,
+       "t": 70
+      },
+      {
+       "d": 65,
+       "t": 80
+      },
+      {
+       "d": 85,
+       "t": 90
+      }
+     ],
+     "gpu": [
+      {
+       "d": 30,
+       "t": 50
+      },
+      {
+       "d": 38,
+       "t": 60
+      },
+      {
+       "d": 50,
+       "t": 70
+      },
+      {
+       "d": 65,
+       "t": 80
+      },
+      {
+       "d": 85,
+       "t": 90
+      }
+     ]
+    },
+    "plan": "办公"
+   }
+  }
+ },
+ "ui": {
+  "start_mode": "window",
+  "theme": "dark"
+ },
+ "vendor": {
+  "block_autostart": false,
+  "kill_on_start": false,
+  "service_start_type": "auto"
+ },
+ "version": 1,
+ "log": {
+  "auto": false,
+  "auto_temp": 90,
+  "enabled": true
+ }
+}

@@ -1,0 +1,49 @@
+<Project>
+
+  <!--
+    Automatic Authenticode signing for QControl binaries.
+
+    When scripts\qcontrol.pfx exists (created by scripts\make-cert.ps1), every
+    build/publish of an executable project signs its *.exe and *.dll output
+    with a self-signed certificate, using the built-in Set-AuthenticodeSignature
+    (no Windows SDK / signtool.exe needed). If the PFX is absent - e.g. a fresh
+    clone, or CI without the cert - signing is skipped silently so the first
+    build still succeeds.
+
+    Why sign at all: an unsigned .exe triggers the "Windows protected your PC"
+    SmartScreen prompt on download, and the "unknown publisher" warning on
+    launch. A self-signed cert clears the "unknown publisher" warning but does
+    NOT whitelist the exe with SmartScreen; that needs a public-CA cert.
+    See scripts\make-cert.ps1 for the full story.
+
+    Opt out for a single build with:  dotnet build -p:SignBinaries=false
+  -->
+
+  <PropertyGroup>
+    <SignScript>$(MSBuildThisFileDirectory)..\scripts\sign.ps1</SignScript>
+    <SignBinaries Condition="'$(SignBinaries)' == ''">true</SignBinaries>
+    <PfxFile>$(MSBuildThisFileDirectory)..\scripts\qcontrol.pfx</PfxFile>
+  </PropertyGroup>
+
+  <!--
+    Only the exe projects (QControl.App / QControl.Boot / QControl.Setup) should sign.
+    The library projects build no host to sign; signing their DLLs is harmless
+    but wasteful. Gate on OutputType == Exe/WinExe.
+  -->
+  <Target Name="SignBuildOutput"
+          AfterTargets="Build"
+          Condition="'$(SignBinaries)' == 'true' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and Exists('$(PfxFile)') and '$(DesignTimeBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SignScript)&quot; &quot;$(OutDir.TrimEnd('\'))&quot;"
+          StandardOutputImportance="Low"
+          ContinueOnError="true" />
+  </Target>
+
+  <Target Name="SignPublishOutput"
+          AfterTargets="Publish"
+          Condition="'$(SignBinaries)' == 'true' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and Exists('$(PfxFile)')">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SignScript)&quot; &quot;$(PublishDir.TrimEnd('\'))&quot;"
+          StandardOutputImportance="Low"
+          ContinueOnError="true" />
+  </Target>
+
+</Project>

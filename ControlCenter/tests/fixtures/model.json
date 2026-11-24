@@ -1,0 +1,421 @@
+{
+ "factory_specs": {
+  "fan_curve_raw": "30,30,30,30,50,60,70,100;30,30,30,30,50,60,70,100",
+  "fan_curve": [
+   30,
+   30,
+   30,
+   30,
+   50,
+   60,
+   70,
+   100
+  ],
+  "source": "registry",
+  "fan_curve_cpu": [
+   30,
+   30,
+   30,
+   30,
+   50,
+   60,
+   70,
+   100
+  ],
+  "fan_curve_gpu": [
+   30,
+   30,
+   30,
+   30,
+   50,
+   60,
+   70,
+   100
+  ],
+  "fan_curve_sys": [
+   30,
+   30,
+   30,
+   30,
+   50,
+   60,
+   70,
+   100
+  ],
+  "FanControlSelect": 0,
+  "FanControlStatus": 0,
+  "ModeBeforeDC": 1,
+  "registry_keys": [
+   "",
+   "Alpha",
+   "ControlCenterClose",
+   "Custom",
+   "FanControlSelect",
+   "FanControlStatus",
+   "Game",
+   "HighPerformance",
+   "IsSetDefault",
+   "LEDModule",
+   "LEDWizard",
+   "Language",
+   "MarcokeyModule",
+   "ModeBeforeDC",
+   "NLW",
+   "PATH",
+   "PowerSaving",
+   "ScreenRotate",
+   "SltAll",
+   "UserFan1",
+   "UserFan1_SYS",
+   "UserFan2",
+   "UserFan2_SYS",
+   "UserFan3",
+   "UserFan3_SYS",
+   "WinKey"
+  ],
+  "probed_at": 1791950319.9184182
+ },
+ "presets": {
+  "version": 1,
+  "fan": {
+   "min_duty": 30,
+   "max_duty": 100,
+   "hysteresis": 2.0,
+   "min_interval": 6.0,
+   "source": "cpu",
+   "mode": "auto",
+   "enabled": true,
+   "temp_wall": 95,
+   "bind_mode": true,
+   "fixed_mode": null,
+   "mode_curves": {
+    "office": [
+     {
+      "t": 50,
+      "d": 30
+     },
+     {
+      "t": 60,
+      "d": 38
+     },
+     {
+      "t": 70,
+      "d": 50
+     },
+     {
+      "t": 80,
+      "d": 65
+     },
+     {
+      "t": 90,
+      "d": 85
+     }
+    ],
+    "game": [
+     {
+      "t": 50,
+      "d": 35
+     },
+     {
+      "t": 62,
+      "d": 50
+     },
+     {
+      "t": 72,
+      "d": 68
+     },
+     {
+      "t": 82,
+      "d": 85
+     },
+     {
+      "t": 90,
+      "d": 100
+     }
+    ],
+    "beast": [
+     {
+      "t": 50,
+      "d": 40
+     },
+     {
+      "t": 60,
+      "d": 55
+     },
+     {
+      "t": 70,
+      "d": 75
+     },
+     {
+      "t": 82,
+      "d": 95
+     },
+     {
+      "t": 90,
+      "d": 100
+     }
+    ]
+   },
+   "curve": [
+    {
+     "t": 50.0,
+     "d": 40
+    },
+    {
+     "t": 60.0,
+     "d": 55
+    },
+    {
+     "t": 70.0,
+     "d": 75
+    },
+    {
+     "t": 82.0,
+     "d": 95
+    },
+    {
+     "t": 90.0,
+     "d": 100
+    }
+   ]
+  },
+  "perf": {
+   "auto_office_on_battery": true,
+   "modes": {
+    "office": {
+     "dat2": 2,
+     "apmd": 2,
+     "plan": "办公"
+    },
+    "game": {
+     "dat2": 1,
+     "apmd": 1,
+     "plan": "游戏"
+    },
+    "beast": {
+     "dat2": 0,
+     "apmd": 0,
+     "plan": "高性能"
+    }
+   },
+   "last_mode": "beast",
+   "restore_on_boot": true
+  },
+  "backlight": {
+   "addr": 6,
+   "effect": 1,
+   "rgb": [
+    0,
+    255,
+    255
+   ],
+   "zones": [
+    {
+     "addr": 5,
+     "rgb": [
+      0,
+      255,
+      255
+     ],
+     "name": "A"
+    },
+    {
+     "addr": 4,
+     "rgb": [
+      0,
+      255,
+      255
+     ],
+     "name": "B"
+    },
+    {
+     "addr": 3,
+     "rgb": [
+      0,
+      255,
+      255
+     ],
+     "name": "C"
+    }
+   ],
+   "zone_addrs_confirmed": true
+  },
+  "gfx": {
+   "modes": {
+    "1": {
+     "code": 1,
+     "name": "混合输出",
+     "short": "混合",
+     "desc": "核显负责输出、独显按需参与渲染（日常省电）"
+    },
+    "2": {
+     "code": 2,
+     "name": "独显直连",
+     "short": "独显",
+     "desc": "显示输出直连独显，核显被固件隐藏（游戏最高帧）"
+    },
+    "3": {
+     "code": 3,
+     "name": "集显输出",
+     "short": "集显",
+     "desc": "只用核显、独显不参与（最省电；本界面将读不到 NVIDIA 数据）"
+    }
+   }
+  },
+  "ec": {
+   "gap": 0.45,
+   "enabled": null
+  },
+  "ui": {
+   "start_mode": "window",
+   "theme": "dark",
+   "osd": true,
+   "osd_fan": false,
+   "av_exclusion": {
+    "at": 1792299934.6447027,
+    "ok": true,
+    "paths": [
+     "C:\\Users\\EXAMPLE-USER\\Projects\\ControlCenter",
+     "C:\\Program Files\\Q-Control",
+     "C:\\ProgramData\\Q-Control"
+    ],
+    "error": null
+   }
+  },
+  "vendor": {
+   "kill_on_start": false,
+   "block_autostart": false,
+   "service_start_type": "auto"
+  }
+ },
+ "device": {
+  "id": "quanta-nl5",
+  "name": "七彩虹 隐星 G16 Pro",
+  "verified": true,
+  "writes_allowed": true,
+  "ec_capable": true,
+  "ec_default": true,
+  "ec_user": null,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": true,
+   "fan_manual": true,
+   "fan_curve": true,
+   "fan_count": 2,
+   "perf_modes": [
+    "office",
+    "game",
+    "beast"
+   ],
+   "gfx_switch": true,
+   "keyboard_rgb": true,
+   "kb_zones": 3
+  }
+ },
+ "limits": {
+  "fan_duty": {
+   "min": 30,
+   "max": 100,
+   "desc": "风扇转速百分比，下限防止停转过热"
+  },
+  "backlight_level": {
+   "min": 0,
+   "max": 2,
+   "desc": "键盘背光档位"
+  },
+  "backlight_rgb": {
+   "min": 0,
+   "max": 255,
+   "desc": "背光 RGB 分量"
+  },
+  "backlight_alpha": {
+   "min": 1,
+   "max": 255,
+   "desc": "背光亮度/Alpha（LKBA）；0 会让灯全灭，禁止"
+  },
+  "gfx_mode": {
+   "min": 1,
+   "max": 3,
+   "desc": "显卡模式码（1=混合输出 / 2=独显直连 / 3=集显输出，均已实测标定；重启后生效）"
+  },
+  "hysteresis": {
+   "min": 0.5,
+   "max": 10.0,
+   "desc": "风扇曲线迟滞（°C）"
+  },
+  "min_interval": {
+   "min": 2.0,
+   "max": 60.0,
+   "desc": "风扇曲线最小写入间隔（秒）"
+  },
+  "gpu_oc_core": {
+   "min": -1000,
+   "max": 1000,
+   "desc": "GPU 核心频率偏移（MHz，有效；= 驱动允许范围）"
+  },
+  "gpu_oc_mem": {
+   "min": -1000,
+   "max": 3000,
+   "desc": "GPU 显存频率偏移（MHz，有效；NVML 内部为双倍单位）"
+  },
+  "temp_wall": {
+   "min": 60,
+   "max": 100,
+   "desc": "温度保护墙（°C）：CPU/GPU 任一边达到即强制最高转速并告警"
+  }
+ },
+ "path": "C:\\Users\\EXAMPLE-USER\\Projects\\ControlCenter\\model.json",
+ "load_error": null,
+ "op_log": [
+  {
+   "ts": 1792333879.2928588,
+   "cmd": "0x0205",
+   "action": "手动风扇",
+   "detail": {
+    "d0": 52,
+    "a": 52,
+    "d2": 52,
+    "group": 64256
+   },
+   "ok": true,
+   "mock": false,
+   "risk": "手动风扇转速 UFA1/UFA2/UFA3"
+  },
+  {
+   "ts": 1792333886.322007,
+   "cmd": "0x0205",
+   "action": "手动风扇",
+   "detail": {
+    "d0": 57,
+    "a": 57,
+    "d2": 57,
+    "group": 64256
+   },
+   "ok": true,
+   "mock": false,
+   "risk": "手动风扇转速 UFA1/UFA2/UFA3"
+  },
+  {
+   "ts": 1792333931.1710956,
+   "cmd": "0x0100",
+   "action": "键盘背光",
+   "detail": {
+    "error": "EC 写入已在设置页关闭（「EC 控制」开关），风扇/背光/模式都不会下发。",
+    "args": {
+     "d0": 6,
+     "a": 255,
+     "b": 255,
+     "c": 255,
+     "d": 17,
+     "gap": null,
+     "group": 64256
+    }
+   },
+   "ok": false,
+   "mock": false,
+   "risk": "键盘背光：写 LKBA/LKBB/LKBG/LKBR/LKBL/WKCL"
+  }
+ ]
+}

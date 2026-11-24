@@ -1,0 +1,156 @@
+{
+  "id": "thunderobot-leiren16",
+  "name": "雷神 猎刃16（NL5 · 带 Logo 灯）",
+  "vendor": "THUNDEROBOT / 雷神",
+  "mold": "Quanta NL5（NLXB / NLZD / NLZE / NLY）",
+  "verified": true,
+  "priority": 150,
+  "sku_claim_fans": 3,
+  "match_codes": [
+    "猎刃16",
+    "LeiShen 16",
+    "雷神 猎刃"
+  ],
+  "match": {
+    "any": [
+      {
+        "system_product": [
+          "猎刃\\s*16|LeiShen\\s*16|雷神\\s*猎刃"
+        ],
+        "system_vendor": [
+          "雷神|THUNDEROBOT"
+        ]
+      }
+    ]
+  },
+  "ec": {
+    "wmi_namespace": "root\\WMI",
+    "wmi_class": "RW_GMWMI",
+    "wmi_instance": "ACPI\\PNP0C14\\0x1_0",
+    "read_group": "0xFA00",
+    "write_group": "0xFB00",
+    "min_gap": 0.2,
+    "read_gap": 0.05,
+    "burst_gap": 0.02,
+    "kb_trunk_addr": 6,
+    "fans": 3,
+    "fans_by_sku": {
+      "0x33": 3,
+      "0x35": 3
+    },
+    "sys_probe": true,
+    "layout_verified": true,
+    "layout": {
+      "cpu_temp": [
+        4,
+        4
+      ],
+      "gpu_temp": [
+        8,
+        4
+      ],
+      "fan1_rpm": [
+        12,
+        4
+      ],
+      "fan2_rpm": [
+        16,
+        4
+      ],
+      "backlight_level": [
+        20,
+        4
+      ]
+    },
+    "sys_layout": {
+      "sys_temp": [
+        4,
+        1
+      ],
+      "fan3_rpm": [
+        8,
+        2
+      ]
+    },
+    "cmd": {
+      "status": "0x0200",
+      "sku": "0x0201",
+      "fan": "0x0205",
+      "perf": "0x0300",
+      "gfx": "0x0203",
+      "backlight": "0x0100",
+      "omcc": "0x0206",
+      "hsre": "0x0204",
+      "read_perf": "0x0202",
+      "gpu_info": "0x0207",
+      "sys_info": "0x0207"
+    },
+    "fan_slots": [
+      "d0",
+      "a",
+      "d2"
+    ],
+    "read_only": [
+      "0x0200",
+      "0x0201",
+      "0x0202",
+      "0x0203",
+      "0x0207",
+      "0x0400"
+    ],
+    "echo_verified": [
+      "0x0200"
+    ],
+    "dangerous": {
+      "0x0300": "性能模式：该分支无条件执行 ECWT(APMD)，发一次就把模式改掉",
+      "0x0206": "写 OMCC（原厂标志位，影响官方控制台行为）",
+      "0x0100": "键盘背光：写 LKBA/LKBB/LKBG/LKBR/LKBL/WKCL",
+      "0x0204": "HSRE（原厂证据指向屏幕高刷 120/240Hz 开关，非散热策略；未实测，勿用）",
+      "0x0205": "手动风扇转速 UFA1/UFA2/UFA3",
+      "0x0203": "显卡模式 GFXT（写组 0xFB00 才生效；重启后生效）"
+    },
+    "confirm_required": [
+      "0x0300",
+      "0x0206",
+      "0x0203"
+    ],
+    "kb_extra_lights": {
+      "logo": 8
+    }
+  },
+  "caps": {
+    "fan_manual": true,
+    "fan_curve": true,
+    "perf_modes": [
+      "office",
+      "game",
+      "beast"
+    ],
+    "gfx_switch": true,
+    "keyboard_rgb": true,
+    "kb_zones": 3
+  },
+  "notes": [
+    "依据 CCLite 对同模具 NL5 的抓包定稿：Logo 灯 = EC 0x0100 槽位 8。用户确认猎刃16 没有尾灯、同模具其它机型连 Logo 也没有；不再要求实机复核。",
+    "sku_claim_fans=3：SMBIOS 只认到 NL5 家族时，若 EC SKU 命中三风扇判据（0x33/0x35）就升级到这份档案，让 Logo 灯控件出现；删掉这个键即可回退为只靠型号名识别。",
+    "这份档案专给**雷神猎刃16**（40 系、50 系显卡版本都是三风扇 + Logo，用户 2026-11-22 确认）：`ec.fans` 直接写 3，不靠 SKU 推。",
+    "EC 命令表、温度/转速偏移、风扇槽位在整条 NL5 产线（NLXB/NLZD/NLZE/NLY）上是同一套固件行为，所以只差「几路风扇」；",
+    "同模具的其它机型（七彩虹隐星 G16 Pro / G16 2024：两风扇、无 Logo）走 `quanta-nl5` 家族档案，不要共用这份。",
+    "识别指纹（match.any，任一命中即可）：原厂注册表项目号 NL5/NLXB/NLZD/NLZE/NLY、板号、BIOS 版本里的模具码、",
+    "或「雷神 + 猎刃16」的机型名组合。SMBIOS 被 OEM 填成营销名也不影响。",
+    "`fans_by_sku` 只留 0x33/0x35，用途只有一个：型号名没认出来时按 SKU 认领这份档案（`ProfileBySku`）。",
+    "0x34（SKU 52）已由外部样本证实两风扇、无 Logo（隐星 G16 2024 / RTX 4070，0x0207 a3=0）⇒ 不得声明为三风扇，",
+    "否则那台两风扇机会被判进这份带 Logo 的档案。原厂 `(sku-52)<=1` 因此更像「支持读 SYS」，不是风扇判据。",
+    "SYS 路读数：0x0207 的 a2 = SYS 温度（1 字节）、a3 = SYS 转速（2 字节）—— **两条都是原厂实锤**",
+    "（2026-11-22 反编译 ControlCenter.exe 的 GetHardwareInformation2：`SysTemperature=(byte)a2; SysFanSpeed=(ushort)a3;`，",
+    "整段只判 m_GamingWmi、不按 SKU 分档）。代码里加了 0~8000 的合理性上限，越界宁可不显示。",
+    "运行时实测兜底（`ec.sys_probe`，默认开）：万一 SMBIOS 只认出模具、掉回 `quanta-nl5` 家族档案（`fans: 2`），",
+    "程序也会继续读 0x0207，a3 连续两次 300~8000 RPM 就当场升级成三路并打日志 `[ec] … 判定三风扇机型`。",
+    "所以这台机器的 SYS 行不依赖型号名识别成功；判定来源看 `/api/device` 的 `ec.fans_source`（`profile`/`sku`/`sys_probe`）。",
+    "下发槽位同样原厂实锤：SetFanSpeedWMI(a2=CPU, a3=GPU, a4=SYS)，与 fan_slots [d0,a,d2] 逐格对应；",
+    "两风扇机型原厂对 UFA3 写 255（= 忽略），我们也照写。",
+    "新品牌/新板号进不来时：把它的 board_product 或 BIOS 版本号补进 match.any 的对应正则即可，仍然不用采集。",
+    "`DeviceResolver.BetterBySku` 的第二道门：`sku_claim_fans` 只对目标档案 `fans_by_sku` 里判为 ≥claim 的 SKU 生效。",
+    "原厂 daemon 的 `IsSupport3Fan = (sku-52)<=1`（52/53）是**型号档位标志**，不等于装了第三风扇（SKU 52 实机 a3=0 即反例）。"
+  ]
+}

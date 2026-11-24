@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 将本机型从「仅连接」提升至「可用」
+    url: https://github.com/czyj1145/Q-Control/blob/main/docs/DEVICES.md
+    about: 无需编写代码或使用命令行，执行「关于 › 机型适配 › 一键采集」后提交采集结果即可
+  - name: 代码贡献（欢迎 Pull Request）
+    url: https://github.com/czyj1145/Q-Control/blob/main/README.md#维护方式
+    about: 代码、文档、翻译的 PR 都欢迎；涉及硬件写入的改动由作者真机复核后合并，要求见 README「维护方式」
+  - name: 报告安全漏洞（请勿通过公开 Issue 提交）
+    url: https://github.com/czyj1145/Q-Control/security/advisories/new
+    about: 提权面、EC 写入越界、本地 HTTP 端点与隐私泄漏等问题须使用私密渠道

@@ -1,0 +1,183 @@
+<UserControl x:Class="QControl.App.Ui.Views.LightView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:QControl.App.Ui"
+             xmlns:ctrl="clr-namespace:QControl.App.Ui.Controls"
+             Background="Transparent">
+
+  <!--
+    背光页 —— 整页一张卡。
+    卡内左右两段（1.6fr / 1fr）：
+      左：分区 tab + 键盘示意图（键帽按 A/B/C… 发光，分区数来自机型档案的 caps.kb_zones）；
+      右：灯光开关 / 灯效 / 色盘 + 预设纯色 / 亮度 / 色值与两个动作。
+
+    EC 的三条硬约束（不是界面偷懒，改之前先看这里）：
+      1) 亮度**只有 0/1/2 三档**（DT3D 低半字节）=> 滑块就是三格，绝不做成 0~100 连续值；
+      2) 颜色按区分（本机 A=5 / B=4 / C=3，其它机型按引导采到的地址）=> 色盘编辑"当前选中的那一区"，
+         但**下发必须所有分区一起发**（后端拿 zones 重建 presets，只发一个会把其余分区丢掉）；
+      3) 灯效只有原厂那四种（常亮 1 / 呼吸 3 / 多彩循环 6 / 流光溢彩 7）。
+    「恢复默认」只复位界面参数并下发一次白/常亮/100%，不是"恢复出厂设置"。
+  -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <!-- ⚠️ Style=PageScroll：滚动条**浮**在最外侧 8px 上，出现时不挤动卡片（见 Theme.xaml 同名样式） -->
+  <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalContentAlignment="Stretch" Focusable="False" Padding="0">
+    <Grid x:Name="Root" VerticalAlignment="Stretch">
+      <Border Margin="19,15,19,15" Style="{StaticResource CardBox}">
+        <DockPanel>
+
+          <!-- ==================== 卡头 ==================== -->
+          <!-- 卡头三块：标题在左、灯效在中间、档位在右（等价 space-between）。
+               这里用同一格内三种对齐做出同样的分配，别硬挤到右边。 -->
+          <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+              <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Keyboard}"/>
+              <TextBlock Text="键盘背光" Style="{StaticResource CardTitle}"/>
+            </StackPanel>
+            <Border Style="{StaticResource CardTag}" HorizontalAlignment="Center">
+              <TextBlock x:Name="EffectTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+            </Border>
+            <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+              <TextBlock x:Name="LevelTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+            </Border>
+          </Grid>
+
+          <!-- ==================== 两栏 ==================== -->
+          <!-- 实测 1050 宽下：左栏 620 / 右栏 390 / 间距 20 -->
+          <Grid x:Name="Body" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="1.6*"/>
+              <ColumnDefinition Width="20"/>
+              <ColumnDefinition Width="1*" MinWidth="250"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左：三区 tab 贴顶 + 键盘图在剩余空间里垂直居中（列布局 + 居中）。键盘图高度是按宽度算的（SVG 固定比例），
+                 卡片撑高后它不会跟着长，多出来的高度只能由这层居中吸收。 -->
+            <DockPanel Grid.Column="0">
+              <!-- 分区按钮在最上（用户 2026-11-18 要求），下面才是灯效档案按钮，再下面是键盘图。 -->
+              <StackPanel x:Name="TabsHost" DockPanel.Dock="Top" Orientation="Horizontal"
+                          Margin="0,0,0,10"/>
+              <!-- 灯效档案：三颗系统档各记一套；点「自定义」= 三个系统档都用这一套（原厂 CustomOverride）。
+                   常驻显示（没有「按模式记忆」开关，别再设 Collapsed —— 以前靠 RenderModes 打开它，
+                   撤掉开关后那行没了，忘了这里就会四颗按钮全不见）。
+                   用小胶囊按钮宽度固定，不再用 UniformGrid 拉成四条扁长条。 -->
+              <StackPanel x:Name="ModeHost" DockPanel.Dock="Top" Orientation="Horizontal"
+                          Margin="0,0,0,10" Visibility="Visible"/>
+              <Border Style="{StaticResource KbBoard}" VerticalAlignment="Center">
+                <!-- 点图上任一分区 = 点上方对应的 tab（切"色盘改哪一区"，不写 EC） -->
+                <ctrl:KeyboardView x:Name="Keyboard"
+                                   ToolTip="点键盘图上的任一分区，切到该分区调色（与上方分区按钮同一件事）"/>
+              </Border>
+            </DockPanel>
+
+            <!-- 右：控制栏。五组在列里均匀分布（space-evenly） -->
+            <StackPanel x:Name="Ctl" Grid.Column="2">
+
+              <!-- 灯光开关：关 = 亮度档位 0（关灯前记住的档位在 code-behind 里）
+                   ⚠️ 这里原本硬写 FontSize=13 + TxtBrush，全站就这一处 13 号。
+                      改成 SetTitle（12.5 SemiBold / Txt）—— 跟设置页每行标题同一档，
+                      层级仍靠"亮色 + 半粗"拉开，下面的「灯效」「亮度」还是 RowLabel(12/Dim)。 -->
+              <Grid x:Name="SecOn">
+                <TextBlock Text="灯光" Style="{StaticResource SetTitle}" VerticalAlignment="Center"/>
+                <ctrl:SwitchButton x:Name="LightSwitch" Style="{StaticResource SwitchButton}"
+                                   HorizontalAlignment="Right" Click="Light_Click"/>
+              </Grid>
+
+              <!-- 分区联动（原厂叫「神光同步」）：跟着「灯光」放，同为一颗开关的排法。
+                   它原来摆在分区 tab 行右侧，看着像 tab 的附属物，实际是"改颜色的作用范围"，
+                   与上面那颗灯开关同一类，所以并到右栏这一列。单分区机型在 code-behind 里整行收掉。 -->
+              <Grid x:Name="SecSync" Margin="0,12,0,0">
+                <TextBlock Text="分区联动" Style="{StaticResource RowLabel}" VerticalAlignment="Center"/>
+                <ctrl:SwitchButton x:Name="SyncSwitch" Style="{StaticResource SwitchButton}"
+                                   HorizontalAlignment="Right" Click="Sync_Click"
+                                   ToolTip="开启后调任意一个分区的颜色，其余分区一起变（原厂叫「神光同步」）"/>
+              </Grid>
+
+              <!-- Logo 灯等独立灯珠：机型档案声明了 ec.kb_extra_lights **且**这台机器是按名字
+                   认出来的，才出现（按三风扇 SKU 升级过来的同模具机不给，见 ExtraLightsGateTests）。
+                   当前只有猎刃16 声明了 Logo；尾灯槽位保留给将来真有的机型，未声明就不摆。
+                   点色块后下面的色盘就改这一路，写入立即生效；不混进键盘 A/B/C 分区表。 -->
+              <StackPanel x:Name="SecExtraLights" Margin="0,12,0,0" Visibility="Collapsed">
+                <Grid x:Name="LogoRow">
+                  <TextBlock Text="Logo 灯" Style="{StaticResource RowLabel}" VerticalAlignment="Center"/>
+                  <Button x:Name="LogoSwatch" Style="{StaticResource MiniButton}"
+                          Width="52" Height="26" HorizontalAlignment="Right"
+                          Click="Extra_Click" Tag="logo"
+                          ToolTip="点这里再用下方色盘改 Logo 灯颜色（EC 独立槽位）"/>
+                </Grid>
+                <Grid x:Name="TailRow" Margin="0,10,0,0">
+                  <TextBlock Text="尾灯" Style="{StaticResource RowLabel}" VerticalAlignment="Center"/>
+                  <Button x:Name="TailSwatch" Style="{StaticResource MiniButton}"
+                          Width="52" Height="26" HorizontalAlignment="Right"
+                          Click="Extra_Click" Tag="tail"
+                          ToolTip="点这里再用下方色盘改尾灯颜色（EC 独立槽位）"/>
+                </Grid>
+              </StackPanel>
+
+              <!-- 灯效：四种，EC 只认这四个码 -->
+              <StackPanel x:Name="SecEffect" Margin="0,12,0,0">                <TextBlock Text="灯效" Style="{StaticResource RowLabel}" Margin="0,0,0,8"/>
+                <UniformGrid Columns="4" x:Name="EffHost"/>
+              </StackPanel>
+
+              <!-- 色盘（逐像素 HSV）+ 预设纯色。两组之间要拉开距离：
+                   贴太近会让人以为它们是一组控件（用户反馈过） -->
+              <StackPanel x:Name="SecWheel" Margin="0,12,0,0">
+                <ctrl:ColorWheel x:Name="Wheel" Width="176" Height="176"
+                                 HorizontalAlignment="Center"/>
+                <WrapPanel x:Name="PuresHost" Orientation="Horizontal"
+                           HorizontalAlignment="Center" Margin="0,10,0,0"/>
+              </StackPanel>
+
+              <!-- 亮度：三档（0 关 / 1 半亮 / 2 全亮） -->
+              <StackPanel x:Name="SecBright" Margin="0,12,0,0">
+                <Grid>
+                  <TextBlock Text="亮度" Style="{StaticResource RowLabel}"/>
+                  <TextBlock x:Name="BrightValue" Text="读取中…" HorizontalAlignment="Right"
+                             FontSize="20" FontWeight="SemiBold"
+                             Typography.NumeralAlignment="Tabular"
+                             Foreground="{DynamicResource TxtBrush}"/>
+                </Grid>
+                <Slider x:Name="BrightSlider" Style="{StaticResource RangeSlider}"
+                        Minimum="0" Maximum="2" SmallChange="1" LargeChange="1"
+                        TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,6,0,0"/>
+              </StackPanel>
+
+              <!-- 自动熄灭：紧贴「亮度」——同一件事的两面（现在多亮 / 多久之后不用亮）。
+                   真源是 presets.light（不是 EC 档位，也不是亮度本身），所以单独一段；
+                   一个下拉装下互斥选项（闲置 X 分钟 / 锁屏熄 / 不熄），见 code-behind 的 AutoOffChoices。 -->
+              <Grid x:Name="SecAutoOff" Margin="0,12,0,0">
+                <TextBlock Text="自动熄灭" Style="{StaticResource RowLabel}"/>
+                <ComboBox x:Name="AutoOffCombo" Style="{StaticResource Select}"
+                          HorizontalAlignment="Right" MinWidth="150"
+                          ToolTip="不动键鼠就关掉背光，一有输入立刻恢复（不改亮度档位与配色）"/>
+              </Grid>
+
+              <!-- 色值 + 恢复默认。原来这里还有一颗「全部同色」——
+                   分区联动上线后它是多余的（联动开着时调任何一区都自动同色），
+                   2026-11-15 用户要求撤掉，别再摆一颗说同一件事的按钮。 -->
+              <StackPanel x:Name="SecActions" Margin="0,12,0,0">
+                <Grid>
+                  <TextBlock x:Name="HexText" Text="#FFFFFF" VerticalAlignment="Center"
+                             FontFamily="Consolas" FontSize="12"
+                             Foreground="{DynamicResource DimBrush}"/>
+                  <Button x:Name="ResetButton" Style="{StaticResource MiniButton}"
+                          HorizontalAlignment="Right"
+                          Content="恢复默认" Click="Reset_Click"/>
+                </Grid>
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

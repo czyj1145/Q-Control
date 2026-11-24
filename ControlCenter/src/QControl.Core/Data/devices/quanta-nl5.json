@@ -1,0 +1,111 @@
+{
+  "id": "quanta-nl5",
+  "name": "广达 NL5",
+  "vendor": "COLORFUL / 雷神（同模具）",
+  "mold": "Quanta NL5（NLXB / NLZD / NLZE / NLY）",
+  "verified": true,
+  "priority": 100,
+  "match_codes": ["NL5", "NLXB", "NLZD", "NLZE", "NLY"],
+  "match": {
+    "any": [
+      { "vendor_registry": ["^NL5$"] },
+      { "vendor_registry": ["^NLXB$"] },
+      { "vendor_registry": ["^NLZD$"] },
+      { "vendor_registry": ["^NLZE$"] },
+      { "vendor_registry": ["^NLY$"] },
+      { "system_product": ["^G16\\s*Pro$"], "system_vendor": ["COLORFUL|七彩虹"] },
+      { "system_product": ["猎刃\\s*16|LeiShen\\s*16|雷神\\s*猎刃"], "system_vendor": ["雷神|THUNDEROBOT"] },
+      { "board_product": ["^(NLXB|NLZD|NLZE|NLY)$"] },
+      { "bios_version": ["(?<![A-Za-z0-9])(NLXB|NLZD|NLZE|NLY)(?![A-Za-z0-9])"] }
+    ]
+  },
+  "ec": {
+    "wmi_namespace": "root\\WMI",
+    "wmi_class": "RW_GMWMI",
+    "wmi_instance": "ACPI\\PNP0C14\\0x1_0",
+    "read_group": "0xFA00",
+    "write_group": "0xFB00",
+    "min_gap": 0.2,
+    "read_gap": 0.05,
+    "burst_gap": 0.02,
+    "kb_trunk_addr": 6,
+    "fans": 2,
+    "fans_by_sku": { "0x33": 3, "0x34": 2, "0x35": 3 },
+    "sys_probe": true,
+    "layout_verified": true,
+    "layout": {
+      "cpu_temp": [4, 4],
+      "gpu_temp": [8, 4],
+      "fan1_rpm": [12, 4],
+      "fan2_rpm": [16, 4],
+      "backlight_level": [20, 4]
+    },
+    "sys_layout": {
+      "sys_temp": [4, 1],
+      "fan3_rpm": [8, 2]
+    },
+    "cmd": {
+      "status": "0x0200",
+      "sku": "0x0201",
+      "fan": "0x0205",
+      "perf": "0x0300",
+      "gfx": "0x0203",
+      "backlight": "0x0100",
+      "omcc": "0x0206",
+      "hsre": "0x0204",
+      "read_perf": "0x0202",
+      "gpu_info": "0x0207",
+      "sys_info": "0x0207"
+    },
+    "fan_slots": ["d0", "a", "d2"],
+    "read_only": ["0x0200", "0x0201", "0x0202", "0x0203", "0x0207", "0x0400"],
+    "echo_verified": ["0x0200"],
+    "dangerous": {
+      "0x0300": "性能模式：该分支无条件执行 ECWT(APMD)，发一次就把模式改掉",
+      "0x0206": "写 OMCC（原厂标志位，影响官方控制台行为）",
+      "0x0100": "键盘背光：写 LKBA/LKBB/LKBG/LKBR/LKBL/WKCL",
+      "0x0204": "HSRE（原厂证据指向屏幕高刷 120/240Hz 开关，非散热策略；未实测，勿用）",
+      "0x0205": "手动风扇转速 UFA1/UFA2/UFA3",
+      "0x0203": "显卡模式 GFXT（写组 0xFB00 才生效；重启后生效）"
+    },
+    "confirm_required": ["0x0300", "0x0206", "0x0203"]
+  },
+  "caps": {
+    "fan_manual": true,
+    "fan_curve": true,
+    "perf_modes": ["office", "game", "beast"],
+    "gfx_switch": true,
+    "keyboard_rgb": true,
+    "kb_zones": 3
+  },
+  "notes": [
+    "这份档案按**模具家族**写，不按品牌写：七彩虹 隐星 G16 Pro、雷神 猎刃 16 等 NL5 模具机型共用同一份。",
+    "为什么能共用：EC 命令表、温度/转速偏移、风扇槽位在整条 NL5 产线（NLXB/NLZD/NLZE/NLY）上是同一套固件行为，",
+    "差别只有「几路风扇」—— 那个由 0x0201 读回的 SKU 判（fans_by_sku），不需要重新采集档案。",
+    "识别指纹（match.any，任一命中即可）：原厂注册表项目号 NL5/NLXB/NLZD/NLZE/NLY、板号、BIOS 版本里的模具码、",
+    "或「雷神 + 猎刃16」的机型名组合。SMBIOS 被 OEM 填成营销名也不影响。",
+    "三风扇（NLY）适配：SKU 命中 fans_by_sku 且值为 3 ⇒ 风扇路数变 3，SYS 圈/滑块自动出现；",
+    "SKU 判据两个来源：原厂 daemon `(sku-52)<=1` ⇒ 0x34/0x35、第三方 FanControlPortable 判 0x33/0x34。",
+    "⚠️ 2026-11-22 外部独立样本（control-center-lite，隐星 G16 2024 / RTX 4070 / **SKU 52 = 0x34**）实测 0x0207 的 a3=0、",
+    "明确没有第三风扇 ⇒ 0x34 改判 **2 路**。反编译 daemon 确认那个判据就是 `IsSupport3Fan = (sku-52)<=1`（52/53），",
+    "它是**型号档位标志**，不等于物理上装了第三风扇 —— SKU 52 那台实机就是 a3=0。",
+    "0x33/0x35 仍只有第三方证据、无实机 ⇒ 保持 3 路但算**待证**（判法：0x0207 的 a3 非 0）。",
+    "运行时实测兜底（`ec.sys_probe`，默认开）：档案判两风扇也照读 0x0207，a3 连续两次落在 300~8000 RPM 就升级成三路 ——",
+    "型号名/SKU 表没覆盖到的三风扇机（贴牌同模具、BIOS 把型号名填成营销名）不用等我们补档案就能自己长出 SYS 行；",
+    "两风扇机上 a3 实测恒 0，这条判据永远不成立，不会凭空多画一个圈。判定来源看 `/api/device` 的 `ec.fans_source`。",
+    "SYS 路读数：0x0207 的 a2 = SYS 温度（1 字节）、a3 = SYS 转速（2 字节）—— **两条都是原厂实锤**",
+    "（2026-11-22 反编译本机 ControlCenter.exe 的 GetHardwareInformation2：`SysTemperature=(byte)a2; SysFanSpeed=(ushort)a3;`，",
+    "整段只判 m_GamingWmi、不按 SKU 分档）。代码里加了 0~8000 的合理性上限，越界宁可不显示。",
+    "下发槽位同样原厂实锤：SetFanSpeedWMI(a2=CPU, a3=GPU, a4=SYS)，与 fan_slots [d0,a,d2] 逐格对应；",
+    "两风扇机型原厂对 UFA3 写 255（= 忽略），我们也照写。",
+    "新品牌/新板号进不来时：把它的 board_product 或 BIOS 版本号补进 match.any 的对应正则即可，仍然不用采集。",
+    "2026-11-22 与外部独立实现（CreeperZZD/control-center-lite）逐条对拍：通信链路、32 字节布局、11 条命令码语义、",
+    "LED 32 位打包与槽位、原厂注册表键、曲线取档 [T,T+10) **全部一致** ⇒ NL5 家族内跨 SKU（对方 52 / 本机 56）确实是同一套读写。",
+    "唯一「数值对不上」的是 0x0202 的能力位：反编译原厂 GetHardwareStatus 确认语义就是 a4==2⇒HSR、a6==2⇒DDS、a5=CameraStatus",
+    "（**对方映射是对的**）；但本机读回 a4=1/a5=2/a6=1 ⇒ 这台 BIOS 没把这两位填成 2，所以能力展示仍以 0x0203 的实际状态为准。",
+    "两风扇机上 0x0207 的 a2 是 **GPU 温度的镜像**（本机实测 a2=53、gpu_temp=53 同值），不是 SYS 温度 —— `fans>=3` 才读它这道门是对的。",
+    "换机器验模具的方法：跑 src/QControl.EcProbe 的 [4b] 段，把它打出的那行 JSON 与另一台机器 diff。",
+    "背光分区方向**实测确认**（2026-11-22，三区染色法：发 addr3=红 / addr4=绿 / addr5=蓝，肉眼看到「左蓝中绿右红」）",
+    "⇒ **addr5 = 左(A)、addr4 = 中(B)、addr3 = 右(C)**，与 `presets.backlight.zones` 里的 A/B/C 命名、以及 CCLite 的记录一致。"
+  ]
+}

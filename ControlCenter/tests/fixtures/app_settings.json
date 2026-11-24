@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "error": null,
+  "autostart": true,
+  "start_mode": "window",
+  "theme": "dark",
+  "ec_capable": true,
+  "ec_default": true,
+  "ec_writes": true,
+  "ec_user": null,
+  "device_verified": true,
+  "device_name": "七彩虹 隐星 G16 Pro",
+  "osd": true,
+  "osd_mode": "vendor_backlight",
+  "vendor_kill_on_start": false,
+  "vendor_block_autostart": false
+}
