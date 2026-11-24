@@ -1,0 +1,1 @@
+{"task": {"path": "\\ControlCenter\\ControlCenter", "exists": true, "enabled": true}, "service": {"name": "hkosdservice", "exists": true, "start": 2, "start_label": "auto", "running": true}, "blocked": false, "saved_service_start": "auto", "ok": true, "running": ["HkeyUserPS.exe", "HkeyOSDSvis.exe", "ControlCenterDaemon.exe"], "kill_on_start": false, "block_autostart": false}

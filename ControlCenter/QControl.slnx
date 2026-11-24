@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/QControl.App/QControl.App.csproj" />
+    <Project Path="src/QControl.Boot/QControl.Boot.csproj" />
+    <Project Path="src/QControl.Core/QControl.Core.csproj" />
+    <Project Path="src/QControl.EcProbe/QControl.EcProbe.csproj" />
+    <Project Path="src/QControl.Hal/QControl.Hal.csproj" />
+    <Project Path="src/QControl.Setup/QControl.Setup.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/QControl.Tests/QControl.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,136 @@
+<UserControl x:Class="QControl.App.Ui.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:QControl.App.Ui"
+             Background="Transparent">
+
+  <!--
+    设置页 —— **四张卡**（2026-10-22 由五张合并而来）：
+      EC 与数据源（整行）· 启动与窗口 ┃ 界面与按键 · 原厂软件（整行）。
+    EC 与数据源、原厂软件各占整行，中间两列并排。
+
+    ⚠️ 2026-10-22 用户要求「卡片减少，类似的合在一起」：原「界面」（跟随系统外观一行）与
+       「提示与反馈」（FN 提示条一行）是两张单行卡，同属观感/提示类偏好 ⇒ 并成一张
+       「界面与按键」（两行）；原厂软件随之转为整行。行内容一个没删。
+
+    ⚠️ 2026-11-21 用户要求「卡片整齐一点」：中间那两列原来左三行、右四行（右卡多一行
+       「锁定 Win 键」），右卡底边比左卡矮一整行 —— 两列参差 62px，左边还空出一块。
+       重排成**两列各三行**，语义也顺了：
+         · 「启动默认页」搬回「启动与窗口」（2026-10-28 它就是从这儿搬去填右卡的）；
+         · 「传感器数据源」与它下面那行 HWiNFO 提示搬进顶上那张整行卡，
+           卡名随之改成「EC 与数据源」—— EC 写入许可与传感器读数本来是同一件事的两头：
+           一个决定"能不能下发"，一个决定"读得到什么"。
+       ⚠️ 别再把行往两列里塞成 3/4：底边不齐是这一页最扎眼的毛病。
+       整行卡里的行（EC / 传感器 / 原厂）都是「左说明 + 最右控件」的同一种形状。
+
+    ⚠️ 「界面密度」那一行**WPF 不做**：那是 CSS 变量换档（紧凑/标准/宽松），
+       桌面端版式是固定像素，做不出等价效果 —— 摆一个点了没变化的控件比不摆更糟。
+    「抑制原厂开机自启」2026-10-22 已接真（`SetAppSettings` → `AppState.SetVendorBlock`）：
+       改计划任务 Enabled + `hkosdservice` 启动类型，两处**都可逆**（不删任务、不卸载）；
+       关掉时恢复成第一次抑制时记下的原值，服务没在跑还会顺手拉起来。
+       行是 code-behind 造的（见 SettingsView.xaml.cs 的「原厂软件（三行）」）。
+    ⚠️ 一个控件只表达一件事：原厂卡里两颗（启动时自动退出 / 立即退出）分得很清楚 ——
+       前者写配置、下次启动生效；后者只管此刻。
+
+    ⚠️ 行由 code-behind 用 UiKit.MakeSetRow 造（EC / 传感器 / 原厂几行的说明是动态文案，
+       写死在 XAML 里没法按时机名/进程现状改写）。
+  -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <!-- ⚠️ Style=PageScroll：滚动条**浮**在最外侧 8px 上，出现时不挤动卡片（见 Theme.xaml 同名样式） -->
+  <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalContentAlignment="Stretch" Focusable="False" Padding="0">
+    <!-- ⚠️ 外层 Grid 的 MinHeight 绑 ScrollViewer 的 ViewportHeight，卡片区在里面**居中**：
+         内容不足一屏 ⇒ 上下均分那点空白；内容超了 ⇒ 照常滚动。
+         ⚠️ 行高一律 Auto（2026-10-29 改）：原先中段两行是 `*` + 卡内内容 Center，
+            窗口一大就把多出来的高度摊进两张卡里 —— 卡还是那么大，内容却浮在中间，
+            卡头与第一行之间空出一整块（全屏下最明显）。卡高由内容定 ⇒ 卡内没有死白，
+            多出来的高度全部落在**卡片区外**。性能页 / 总览页早就是这个处理
+            （见 PerfView.xaml 顶部「别让 Root 直接把卡片 Stretch」那段）。 -->
+    <Grid MinHeight="{Binding ViewportHeight, ElementName=Scroll}" VerticalAlignment="Stretch">
+    <Grid x:Name="CardGrid" Margin="19,15,19,15" VerticalAlignment="Center">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <!-- ==================== EC 与数据源（整行） ==================== -->
+      <Border Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource CardBox}">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Ec}"/>
+              <TextBlock Text="EC 与数据源" Style="{StaticResource CardTitle}"/>
+            </StackPanel>
+            <Border x:Name="EcTagBox" Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+              <TextBlock x:Name="EcTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+            </Border>
+          </Grid>
+          <StackPanel x:Name="EcRows" VerticalAlignment="Top"/>
+        </DockPanel>
+      </Border>
+
+      <!-- ==================== 启动与窗口 ==================== -->
+      <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBox}" VerticalAlignment="Top">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Window}"/>
+              <TextBlock Text="启动与窗口" Style="{StaticResource CardTitle}"/>
+            </StackPanel>
+            <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+              <TextBlock Text="开机后的行为" Style="{StaticResource CardTagText}"/>
+            </Border>
+          </Grid>
+          <StackPanel x:Name="StartRows" VerticalAlignment="Top"/>
+        </DockPanel>
+      </Border>
+
+      <!-- ==================== 界面与按键（原「界面与提示」+ 锁定 Win 键） ==================== -->
+      <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBox}">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Layout}"/>
+              <TextBlock Text="界面与按键" Style="{StaticResource CardTitle}"/>
+            </StackPanel>
+            <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+              <TextBlock x:Name="ThemeTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+            </Border>
+          </Grid>
+          <StackPanel x:Name="UiRows" VerticalAlignment="Top"/>
+        </DockPanel>
+      </Border>
+
+      <!-- ==================== 原厂软件（整行） ==================== -->
+      <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBox}">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Power}"/>
+              <TextBlock Text="原厂软件" Style="{StaticResource CardTitle}"/>
+            </StackPanel>
+            <Border x:Name="VendorTagBox" Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+              <TextBlock x:Name="VendorTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+            </Border>
+          </Grid>
+          <StackPanel x:Name="VendorRows" VerticalAlignment="Top"/>
+        </DockPanel>
+      </Border>
+    </Grid>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

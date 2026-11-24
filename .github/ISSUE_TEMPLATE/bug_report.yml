@@ -1,0 +1,67 @@
+name: 问题反馈
+description: 功能异常 / 报错 / 显示不对 / 数据缺失
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        只需要说清楚**症状**（在哪个页面、点了什么、看到什么），不用自己诊断根因。
+
+        注意：未标定的机型（机型表里显示「仅连接」）本来就只回原始字节，没有温度/转速、风扇曲线也不可用——这类属于已知限制，不是 bug。
+
+  - type: input
+    id: model
+    attributes:
+      label: 机型
+      description: 品牌 + 型号；或 `wmic csproduct get name` 的输出
+      placeholder: 例：七彩虹 隐星 G16 Pro（NL5）
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Q-Control 版本
+      description: 安装包文件名或「关于」页里的版本号
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: elevated
+    attributes:
+      label: 顶栏显示的状态
+      options:
+        - 已连接
+        - "⚠ 需管理员"
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 症状
+      description: 哪个页面 → 点了什么 → 期望发生什么 → 实际发生了什么。截图可以直接拖进来。
+      placeholder: |
+        例：性能页点「野兽模式」，按钮变亮但风扇没变化；切回游戏模式也一样。
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: 日志片段（可选）
+      description: "`%ProgramData%\\Q-Control\\logs\\cc-<日期>.log` 里出问题那一段，纯文本可直接粘贴。"
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认这不是「机型未标定」或「未提权」导致的（这两类在 README 里都有说明）
+          required: true

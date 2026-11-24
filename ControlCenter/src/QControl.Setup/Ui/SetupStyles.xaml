@@ -1,0 +1,177 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+      ============================================================================
+       安装向导的配色 —— 与主程序**同源**（ControlCenter 的 Ui/ThemeHex.cs）：
+         Panel  #141821   面板底
+         Card   #11151d   内嵌块（浅底上不用，这里是暗底上的"更深一层"）
+         Line   #252c3a   分隔线 / 边框
+         Text   #e6ebf5   正文
+         Dim    #8b97ab   次要文字
+         Accent #4dd6ff   主色（与主界面的高亮、曲线、开关一致）
+      ============================================================================
+    -->
+    <SolidColorBrush x:Key="BPanel" Color="#141821" />
+    <SolidColorBrush x:Key="BCard" Color="#11151d" />
+    <SolidColorBrush x:Key="BLine" Color="#252c3a" />
+    <SolidColorBrush x:Key="BText" Color="#e6ebf5" />
+    <SolidColorBrush x:Key="BDim" Color="#8b97ab" />
+    <SolidColorBrush x:Key="BAccent" Color="#4dd6ff" />
+    <SolidColorBrush x:Key="BField" Color="#1b2029" />
+    <SolidColorBrush x:Key="BFieldLine" Color="#2c3444" />
+    <SolidColorBrush x:Key="BOk" Color="#39d98a" />
+    <SolidColorBrush x:Key="BBad" Color="#ff6b6b" />
+
+    <!-- ============================================================ 输入框 -->
+    <Style x:Key="DarkTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource BField}" />
+        <Setter Property="Foreground" Value="{StaticResource BText}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BFieldLine}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="CaretBrush" Value="{StaticResource BAccent}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource BAccent}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd" CornerRadius="6"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BAccent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================ 按钮 -->
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#c3cddd" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#334054" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" CornerRadius="6"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BField}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#3d4b63" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#08222b" />
+        <Setter Property="Background" Value="{StaticResource BAccent}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#7fe4ff" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#31bede" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================ 复选框 -->
+    <Style x:Key="DarkCheck" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource BText}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Box" Width="17" Height="17" CornerRadius="4"
+                                Background="{StaticResource BField}"
+                                BorderBrush="{StaticResource BFieldLine}" BorderThickness="1"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="Tick" Text="✓" FontSize="12" FontWeight="Bold"
+                                       Foreground="#08222b" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" Visibility="Collapsed" />
+                        </Border>
+                        <ContentPresenter Margin="9,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{StaticResource BAccent}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BAccent}" />
+                            <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BAccent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================ 进度条 -->
+    <Style x:Key="DarkProgress" TargetType="ProgressBar">
+        <Setter Property="Height" Value="6" />
+        <Setter Property="Foreground" Value="{StaticResource BAccent}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <!-- PART_Track 必须是模板里**平级**的元素（ProgressBar 靠它算轨道宽度）；
+                         把它和 PART_Indicator 嵌套起来，指标条会永远 0 宽。 -->
+                    <Grid>
+                        <Border Background="{StaticResource BField}" CornerRadius="3" />
+                        <Border x:Name="PART_Track" />
+                        <Border x:Name="PART_Indicator" HorizontalAlignment="Left"
+                                Background="{TemplateBinding Foreground}" CornerRadius="3" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

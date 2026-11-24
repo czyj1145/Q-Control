@@ -1,0 +1,8 @@
+{
+  "configProperties": {
+    "System.GC.Server": false,
+    "System.GC.Concurrent": false,
+    "System.GC.Conserve": 9,
+    "System.GC.LOHThreshold": 131072
+  }
+}

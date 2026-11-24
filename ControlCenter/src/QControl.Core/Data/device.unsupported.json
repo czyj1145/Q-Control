@@ -1,0 +1,19 @@
+{
+ "caps": {},
+ "ec": {
+  "cmd": {},
+  "fans": 0,
+  "layout": {},
+  "layout_verified": false
+ },
+ "id": "unsupported",
+ "mold": "",
+ "name": "未识别的机型",
+ "notes": [
+  "没有识别出机型，也没有找到广达 RW_GMWMI 接口 —— 控制中心不会碰 EC。"
+ ],
+ "priority": -1,
+ "vendor": "",
+ "verified": false,
+ "writes_allowed": false
+}

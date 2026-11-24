@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+     QControl.Boot —— 绿色版（免安装版）的唯一入口
+    ============================================================================
+
+    产物：`QControl.Boot.exe`，在绿色版 zip 里**改名成 `Q-Control.exe`**，放在
+    解压目录根上；主程序整套搬到同一层的 `app\` 里（见 scripts\pack-release.ps1）。
+
+    为什么需要它（2026-10-29 用户报障「绿色版双击没反应」）：
+      主程序是框架依赖发布（约 2 MB），机器上必须有 .NET 10 桌面运行时。
+      安装版由安装器负责补齐（QControl.Setup\Runtime.cs）；绿色版**没有安装器**，
+      于是缺运行时的时候，用户双击只看到一个什么都不说的失败 —— 连"缺什么"都不知道。
+      这个引导器就是绿色版的"安装器"，只管一件事：没有运行时就把用户带到装好为止。
+
+    为什么是 net48（和安装器同一个理由）：
+      它要在"还没装 .NET 10"的机器上跑起来。.NET Framework 4.8 是 Win10 1903+ / Win11
+      内置的，WPF 也在里面 ⇒ 零依赖、单文件几十 KB，不会让绿色版体积翻倍。
+
+    组成只有三件事，都不做业务判断：
+      ① 检测 Microsoft.WindowsDesktop.App 10.x（规则与 QControl.Setup\Runtime.cs 同源）；
+      ② 缺了就弹窗：自动下载安装（约 55 MB，走 UAC）或打开发布页；
+      ③ 齐了就把参数原样转给 app\QControl.exe（全程序唯一入口，2026-10-30 起）。
+
+    ⚠️ 本 exe **不带 requireAdministrator 清单**：绿色版双击不该先弹 UAC。
+       只有真的去装运行时时，才用 runas 提权那一个安装进程。
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>QControl.Boot</RootNamespace>
+    <AssemblyName>QControl.Boot</AssemblyName>
+    <!-- net48 没有 runtimeconfig.json；程序集重定向只能进 .exe.config，全内置程序集其实用不上 -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <ApplicationIcon>..\QControl.App\Assets\qcontrol.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      .NET 10 桌面运行时的**检测**：与安装器 QControl.Setup 共用同一份源码
+      （见 src\Shared\DotnetDesktopRuntime.cs）。两个入口回答的是同一个问题，
+      各抄一份迟早会出现"安装器说缺、引导器说不缺"。
+    -->
+    <Compile Include="..\Shared\DotnetDesktopRuntime.cs" Link="Shared\DotnetDesktopRuntime.cs" />
+    <!--
+      运行时安装包的**下载**：与安装器共用同一份（见 src\Shared\RuntimeDownload.cs）。
+      多源回退的逻辑抄两份的话，哪天加了一个镜像只会加在一边 —— 用户装安装版能下、
+      下绿色版下不了，这种不一致最难查。
+    -->
+    <Compile Include="..\Shared\RuntimeDownload.cs" Link="Shared\RuntimeDownload.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- net48 的 BCL 不自动带这两个：下载运行时用 HttpClient -->
+    <Reference Include="System.Net.Http" />
+    <!-- 编译期 net48 参考程序集（机器上没有 VS 的 targeting pack 时用），不进产物 -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 图标与主程序、托盘、安装器同一个 .ico：视觉资产单一来源 -->
+    <Resource Include="..\QControl.App\Assets\qcontrol.ico" Link="Assets\qcontrol.ico" />
+
+    <!--
+      配色的**真源**是安装器那份 SetupStyles.xaml（它自己又是从主程序 ThemeHex 抄的）。
+      这里链接过来而不是复制一份：按钮/进度条/配色只要改一处，安装向导和绿色版引导
+      同时跟着走 —— 抄一份意味着下次调色必然只改一处。
+    -->
+    <Resource Include="..\QControl.Setup\Ui\SetupStyles.xaml" Link="Ui\SetupStyles.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UseWPF 的隐式 using 里没有这两个，而本项目的正经活儿就是文件与下载 -->
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Http" />
+  </ItemGroup>
+
+</Project>

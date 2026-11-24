@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+============================================================
+  run-silent.wsf  ——  Q-Control 控制中心 · 静默启动（双击它，没有黑框）
+
+  为什么需要它：
+    主程序本身是 WinExe，双击它**不会**有黑框。这里只补两件它不做的事：
+      1) 已经有一个实例在跑时，把那个实例的界面叫到前台（--show 那条路）；
+      2) 起来之后等 10 秒复核端口，没起来就弹一句"为什么"——
+         否则 UAC 被点掉时用户只会看到"双击没反应"。
+
+  提权决策不在本脚本里：主程序自己先试系统里那个 HighestAvailable 自启任务
+    （任务计划服务代启，不弹 UAC），没有任务才退回 runas。第一次会弹一发 UAC，
+    那一次会把任务装好，之后不再弹。
+
+  想看日志：ControlCenter\logs\cc-yyyy-MM-dd.log（控制台输出都 tee 在那）
+  构建目标：自动分辨 —— ReadyToRun（bin\R2R\…，可选，省内存）优先，
+            没有就退回普通 Release 构建（bin\Release\…，dotnet build 的默认产物）。
+  想看实时横幅：双击 run-as-admin.cmd 并追加 console 开关
+============================================================
+-->
+<package>
+  <job id="run-silent">
+    <script language="VBScript">
+    <![CDATA[
+Option Explicit
+' ------------------------------------------------------------
+'  只做三件事：主程序在不在、端口有没有被占、提权拉起。
+'  不判断"要不要起"、不重试、不改参数 —— 那些都在主程序里。
+' ------------------------------------------------------------
+
+Const PORT = 8765
+
+' ⚠️ 这里的变量名不能和下面的 Function 名重名 —— VBScript 不区分大小写，
+'    Dim buildDir + Function BuildDir 就是"名称重定义"（800A0411），整脚本编译不过。
+Dim fso, shell, wsh, here, binDir, exe, args, i
+Set fso   = CreateObject("Scripting.FileSystemObject")
+Set shell = CreateObject("Shell.Application")   ' ShellExecute 支持 runas（提权）
+Set wsh   = CreateObject("WScript.Shell")       ' Run / Popup（气泡提示）
+
+here = fso.GetParentFolderName(WScript.ScriptFullName)
+binDir = BuildDir(here)
+exe  = binDir & "QControl.exe"
+
+If Not fso.FileExists(exe) Then
+    MsgBox "找不到主程序：" & vbCrLf & exe & vbCrLf & vbCrLf & _
+           "先编译一次：运行 src\test.cmd，或 dotnet build QControl.slnx -c Release。", _
+           16, "Q-Control 控制中心"
+    WScript.Quit 2
+End If
+
+args = ""
+For i = 0 To WScript.Arguments.Count - 1
+    If i > 0 Then args = args & " "
+    args = args & """" & WScript.Arguments(i) & """"
+Next
+' 没传参时**不要**再替用户塞 tray 参数：界面换成 WPF 之后，"双击 run-as-admin.cmd"
+' 的预期是窗口直接弹出来。开机自启任务自己带 tray（见 Autostart.TrayCommand），
+' 而配置里的 start_mode 仍由主程序解释，这里不抢它的活。
+
+' 已经在跑就别再起一个：EC 命令缓冲区是跨进程单槽，两个实例会互相覆盖。
+' 但用户的意图是「我要看界面」——所以请旧实例把窗口叫到前台，而不是教他去点托盘图标。
+' 这一步不带 runas：只是发一个具名事件，没必要为此再弹一次 UAC。
+' 退出码约定见主程序 --show：0=已叫醒 5=对方不接信号 4=端口已空（继续正常启动）。
+If PortBusy() Then
+    Dim mainExe, rc
+    mainExe = binDir & "QControl.exe"
+    rc = 1
+    If fso.FileExists(mainExe) Then
+        ' 隐藏 + 等它跑完，好拿退出码（Run 走 CreateProcess，不展开变量）
+        rc = wsh.Run("""" & mainExe & """ --show", 0, True)
+    End If
+    If rc = 0 Then WScript.Quit 0
+    If rc = 5 Then
+        wsh.Popup "控制中心已经在运行，但这个版本不接受「打开界面」的请求。" & vbCrLf & _
+                  vbCrLf & "请左键点托盘图标打开界面，右键退出。", _
+                  8, "Q-Control 控制中心", 48
+        WScript.Quit 0
+    End If
+End If
+
+' 不再自己 runas：谁提权、怎么提权都交给主程序判断（见 Program.cs 的「零 UAC 通道」）。
+' 它优先用系统里那个 HighestAvailable 自启任务代启 —— 任务计划服务用任务里存的完整
+' 令牌启动，**不经过 AppInfo，因此不弹 UAC**。任务还不存在（第一次）时主程序才会
+' 退回 runas，并在那一次顺手把任务装好。
+'
+' ⚠️ 第四个参数必须是 1（SW_SHOWNORMAL），**不能**再用原来的 0（SW_HIDE）：
+'    SW_HIDE 会通过 STARTUPINFO 传给整个进程，而主程序自己也开 WPF 主窗口 ——
+'    那一下会把它一起藏掉（表现是"起来了但界面不出来"）。启动器还在的时候
+'    被藏的只是启动器，现在没有那一层了，所以这里必须改回正常显示。
+shell.ShellExecute exe, args, here, "open", 1
+
+' UAC 点了「否」或主程序当场挂了，不说一声用户只会觉得"双击没反应"。
+' 等启动完再看一次端口，没起来就把人指向日志。
+WScript.Sleep 4000
+If PortBusy() Then WScript.Quit 0
+WScript.Sleep 6000
+If PortBusy() Then WScript.Quit 0
+
+wsh.Popup "控制中心没起来。常见原因：" & vbCrLf & vbCrLf & _
+          "  1. UAC 弹窗点了「否」—— EC 写入必须要管理员；" & vbCrLf & _
+          "  2. 主程序启动即退出 —— 看 ControlCenter\logs\ 下当天的日志。" & vbCrLf & vbCrLf & _
+          "想看完整启动过程：run-as-admin.cmd 加 console 开关。", _
+          10, "Q-Control 控制中心", 48
+WScript.Quit 1
+
+' ------------------------------------------------------------
+'  构建目录：R2R 优先，普通 Release 兜底。
+'  ⚠️ 别写死 R2R —— 它是**可选**构建（src\publish-r2r.cmd）。从仓库 clone 下来
+'     按 README 跑一次 dotnet build，产物只在 bin\Release\ 里；写死 R2R 会让
+'     新用户第一次双击就弹「找不到主程序」。
+' ------------------------------------------------------------
+Function BuildDir(root)
+    ' 局部名别复用全局名（i / buildDir 之类），省得再撞一次"名称重定义"
+    Dim cand, k, p
+    cand = Array("bin\R2R\net10.0-windows\", "bin\Release\net10.0-windows\")
+    For k = 0 To UBound(cand)
+        p = root & "\src\QControl.App\" & cand(k)
+        If fso.FileExists(p & "QControl.exe") Then
+            BuildDir = p
+            Exit Function
+        End If
+    Next
+    ' 都没有：按普通构建的路径报错，提示才说得清要去编哪里
+    BuildDir = root & "\src\QControl.App\" & cand(UBound(cand))
+End Function
+
+Function PortBusy()
+    ' 管道得交给命令解释器去展开，而 Run() 走的是 CreateProcess，
+    ' 不会自动展开 %comspec% —— 所以这里先手工展开再拼命令行。
+    ' 窗口样式 0 = 隐藏；第三个参数 True = 等它跑完，好拿退出码。
+    Dim c
+    c = """" & wsh.ExpandEnvironmentStrings("%comspec%") & """ /c " & _
+        "netstat -ano | findstr :" & PORT & " | findstr LISTENING >nul"
+    PortBusy = (wsh.Run(c, 0, True) = 0)
+End Function
+    ]]>
+    </script>
+  </job>
+</package>

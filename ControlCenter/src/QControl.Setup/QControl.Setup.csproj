@@ -1,0 +1,141 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+     QControl.Setup —— 安装包本体（setup.exe）
+    ============================================================================
+
+    产物：一个 `QControl.Setup.exe`，双击即装。**几百 KB**，自身不带运行时。
+
+    为什么安装器是 net48 而主程序是 net10.0（2026-10-28 改）：
+      安装器的职责恰好是"在一台还没装 .NET 10 的机器上跑起来"，所以它自己不能
+      依赖 .NET 10。之前它走自包含（self-contained）单文件发布 —— 于是安装包里塞了一整套
+      WPF 运行时（72 MB），而载荷里还有**另一份**（主程序自带的那份），132 MB 的
+      安装包里有 72 MB 纯属重复。
+      .NET Framework 4.8 是 Windows 10 1903+ / Windows 11 **内置**的（4.8.1 在
+      Win11 22H2+），WPF 也在里面 —— 安装器从此零依赖、几百 KB，而且仍是同一套
+      WPF 界面，配色版式一行没改。
+      主程序仍是 net10.0-windows，但改成**框架依赖**发布（约 2 MB）。缺运行时由本安装器
+      **自动下载 + 静默装到默认位置 %ProgramFiles%\dotnet**（见 Runtime.cs；绿色版没有安装器，
+      只能靠使用说明把用户带到官网自己装）。
+
+    组成：
+      · WPF 安装向导（暗色，配色与主程序同源：见 SetupStyles.xaml）
+      · payload.zip（**嵌入资源**，就是主程序的框架依赖发布目录，约 1~2 MB）
+      · model.json（嵌入资源，首次安装时种到 %ProgramData%\Q-Control）
+
+    ⚠️ payload.zip 由 `src\pack-release.cmd` 生成到 `dist\_payload\payload.zip`，
+       本目录**不提交**它（二进制不进 git）。直接 `dotnet build` 本
+       项目能编译，但没有载荷 ⇒ 装出来的东西是空的，向导会明确报错而不是假装成功。
+       要出安装包请跑 pack-release.cmd。
+
+    ⚠️ 为什么不用 Inno Setup / NSIS / WiX：仓库至今**零第三方依赖**，那三家要么得
+       装一套工具链、要么得把脚本语言混进来。这里就是一段 C#，构建方式和其他项目
+       一样（dotnet build），签名脚本也能直接复用。
+
+    ⚠️ 唯一一个 NuGet 包是 Microsoft.NETFramework.ReferenceAssemblies：它只是
+       **编译期**的 net48 参考程序集（机器上没装 VS 的 net48 targeting pack 时用），
+       PrivateAssets=all ⇒ 不进产物、不进分发包。要彻底零 NuGet，装了 VS Build Tools
+       的机器可以删掉这一行，但 CI 与干净开发机会编译失败。
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!--
+      只为一件事：FolderBrowserDialog（选安装目录）。net48 里它是老式树形对话框
+      （.NET 10 那个版本才是现代 IFileOpenDialog），够用，且不用手写 COM 互操作。
+    -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>QControl.Setup</RootNamespace>
+    <AssemblyName>QControl.Setup</AssemblyName>
+    <!-- net48 没有 runtimeconfig.json，程序集重定向只能进 .exe.config；全内置程序集其实用不上 -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+
+    <!-- 安装器要写 Program Files / HKLM / 计划任务：必须管理员启动（首次一次 UAC） -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\QControl.App\Assets\qcontrol.ico</ApplicationIcon>
+
+    <!--
+      嵌入资源路径。默认取打包脚本生成的 dist\_payload\payload.zip；
+      想手工指定就 `dotnet build -p:PayloadZip=<路径>`。
+    -->
+    <PayloadZip Condition="'$(PayloadZip)' == ''">$(MSBuildThisFileDirectory)..\..\dist\_payload\payload.zip</PayloadZip>
+    <ModelSeed Condition="'$(ModelSeed)' == ''">$(MSBuildThisFileDirectory)..\..\model.json</ModelSeed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      .NET 10 桌面运行时的**检测**：与绿色版引导器 QControl.Boot 共用同一份源码
+      （见 src\Shared\DotnetDesktopRuntime.cs）。两个入口回答的是同一个问题，
+      各抄一份迟早会出现"安装器说缺、引导器说不缺"。
+    -->
+    <Compile Include="..\Shared\DotnetDesktopRuntime.cs" Link="Shared\DotnetDesktopRuntime.cs" />
+    <!--
+      运行时安装包的**下载**：同样与绿色版引导器共用（见 src\Shared\RuntimeDownload.cs）。
+      多源回退的逻辑抄两份的话，哪天加了一个镜像只会加在一边 —— 用户装安装版能下、
+      下绿色版下不了，这种不一致最难查。
+    -->
+    <Compile Include="..\Shared\RuntimeDownload.cs" Link="Shared\RuntimeDownload.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- net48 的 BCL 不自动引这几个，用到哪个显式引哪个 -->
+    <Reference Include="System.IO.Compression" />            <!-- ZipArchive（解载荷） -->
+    <Reference Include="System.IO.Compression.FileSystem" /> <!-- ExtractToFile -->
+    <Reference Include="System.Net.Http" />                  <!-- 下载 .NET 桌面运行时 -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 左上角图标：与主程序、托盘同一个 .ico，视觉资产单一来源 -->
+    <Resource Include="..\QControl.App\Assets\qcontrol.ico" Link="Assets\qcontrol.ico" />
+  </ItemGroup>
+
+  <!--
+    ⚠️ 打开 UseWindowsForms 之后，SDK 会把 ImplicitUsings 换成 **WinForms 那一套**：
+       它去掉 System.IO / System.Net.Http，换进 System.Windows.Forms / System.Drawing。
+       后果是 `File`、`Path`、`StreamWriter` 全都"不存在"，而 `Application` / `MessageBox`
+       又会和 WPF 的同名类型撞车。
+
+    这里的处理：把丢掉的补回来，把撞车的去掉（需要的两处写全名引用）。
+  -->
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Http" />
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(PayloadZip)')">
+    <EmbeddedResource Include="$(PayloadZip)" LogicalName="QControl.Setup.payload.zip" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(ModelSeed)')">
+    <EmbeddedResource Include="$(ModelSeed)" LogicalName="QControl.Setup.model.json" />
+  </ItemGroup>
+
+  <!--
+    ⚠️ 2026-10-25 事故：app.manifest 的注释里写了安装器的命令行开关原文（含连续两个
+       减号）。XML 规范**禁止 comment 内含连续两个减号**，而 SDK 嵌清单时不做 XML 校验，
+       于是编译成功、双击却只会弹「应用程序的并行配置不正确」（事件日志 SideBySide 59：
+       "无效的 Xml 语法"）。这种错误在构建期完全看不见，必须等用户双击才暴露。
+
+    所以在这里用 XmlPeek 强制解析一遍：清单语法坏了 → XPathDocument 直接抛 ⇒ 编译失败；
+    顺带断言 requireAdministrator 还在（安装器必须提权，这条不能被谁手滑删掉）。
+    local-name() 是为了绕开 XML 命名空间前缀，改清单里的 xmlns 也不会失效。
+  -->
+  <Target Name="ValidateApplicationManifest" BeforeTargets="PrepareForBuild">
+    <XmlPeek XmlInputPath="$(ApplicationManifest)"
+             Query="//*[local-name()='requestedExecutionLevel']/@level">
+      <Output TaskParameter="Result" ItemName="_ManifestLevel" />
+    </XmlPeek>
+    <Error Condition="'@(_ManifestLevel)' != 'requireAdministrator'"
+           Text="app.manifest 解析异常：找不到 requestedExecutionLevel=&quot;requireAdministrator&quot;（当前值：@(_ManifestLevel)）。安装器必须提权，且 XML 必须合法。" />
+  </Target>
+
+</Project>

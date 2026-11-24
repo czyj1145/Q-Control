@@ -1,0 +1,1058 @@
+{
+ "clamp": [
+  {
+   "key": "backlight_alpha",
+   "value": -4.0,
+   "expected": 1
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 0.0,
+   "expected": 1
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 1.0,
+   "expected": 1
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 1.4,
+   "expected": 1
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 1.6,
+   "expected": 2
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 128.0,
+   "expected": 128
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 128.5,
+   "expected": 128
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 254.4,
+   "expected": 254
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 254.5,
+   "expected": 254
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 254.6,
+   "expected": 255
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 255.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 256.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 355.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_alpha",
+   "value": -1.0,
+   "expected": 1
+  },
+  {
+   "key": "backlight_alpha",
+   "value": -999.0,
+   "expected": 1
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 999.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_alpha",
+   "value": 3.5,
+   "expected": 4
+  },
+  {
+   "key": "backlight_alpha",
+   "value": -1.5,
+   "expected": 1
+  },
+  {
+   "key": "backlight_level",
+   "value": -5.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_level",
+   "value": -1.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_level",
+   "value": 0.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_level",
+   "value": 0.4,
+   "expected": 0
+  },
+  {
+   "key": "backlight_level",
+   "value": 0.5,
+   "expected": 0
+  },
+  {
+   "key": "backlight_level",
+   "value": 0.6,
+   "expected": 1
+  },
+  {
+   "key": "backlight_level",
+   "value": 1.0,
+   "expected": 1
+  },
+  {
+   "key": "backlight_level",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": 1.4,
+   "expected": 1
+  },
+  {
+   "key": "backlight_level",
+   "value": 1.6,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": 2.0,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": 3.0,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": 102.0,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": -999.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_level",
+   "value": 999.0,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": 3.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_level",
+   "value": -1.5,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": -5.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": -1.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 0.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 0.4,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 0.5,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 0.6,
+   "expected": 1
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 127.5,
+   "expected": 128
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 128.0,
+   "expected": 128
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 254.4,
+   "expected": 254
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 254.5,
+   "expected": 254
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 254.6,
+   "expected": 255
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 255.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 256.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 355.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_rgb",
+   "value": -999.0,
+   "expected": 0
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 999.0,
+   "expected": 255
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "backlight_rgb",
+   "value": 3.5,
+   "expected": 4
+  },
+  {
+   "key": "backlight_rgb",
+   "value": -1.5,
+   "expected": 0
+  },
+  {
+   "key": "fan_duty",
+   "value": 25.0,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 29.0,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 30.0,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 30.4,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 30.5,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 30.6,
+   "expected": 31
+  },
+  {
+   "key": "fan_duty",
+   "value": 65.0,
+   "expected": 65
+  },
+  {
+   "key": "fan_duty",
+   "value": 65.5,
+   "expected": 66
+  },
+  {
+   "key": "fan_duty",
+   "value": 99.4,
+   "expected": 99
+  },
+  {
+   "key": "fan_duty",
+   "value": 99.5,
+   "expected": 100
+  },
+  {
+   "key": "fan_duty",
+   "value": 99.6,
+   "expected": 100
+  },
+  {
+   "key": "fan_duty",
+   "value": 100.0,
+   "expected": 100
+  },
+  {
+   "key": "fan_duty",
+   "value": 101.0,
+   "expected": 100
+  },
+  {
+   "key": "fan_duty",
+   "value": 200.0,
+   "expected": 100
+  },
+  {
+   "key": "fan_duty",
+   "value": 0.0,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": -1.0,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": -999.0,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 999.0,
+   "expected": 100
+  },
+  {
+   "key": "fan_duty",
+   "value": 1.5,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 2.5,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": 3.5,
+   "expected": 30
+  },
+  {
+   "key": "fan_duty",
+   "value": -1.5,
+   "expected": 30
+  },
+  {
+   "key": "gfx_mode",
+   "value": -4.0,
+   "expected": 1
+  },
+  {
+   "key": "gfx_mode",
+   "value": 0.0,
+   "expected": 1
+  },
+  {
+   "key": "gfx_mode",
+   "value": 1.0,
+   "expected": 1
+  },
+  {
+   "key": "gfx_mode",
+   "value": 1.4,
+   "expected": 1
+  },
+  {
+   "key": "gfx_mode",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "gfx_mode",
+   "value": 1.6,
+   "expected": 2
+  },
+  {
+   "key": "gfx_mode",
+   "value": 2.0,
+   "expected": 2
+  },
+  {
+   "key": "gfx_mode",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "gfx_mode",
+   "value": 2.4,
+   "expected": 2
+  },
+  {
+   "key": "gfx_mode",
+   "value": 2.6,
+   "expected": 3
+  },
+  {
+   "key": "gfx_mode",
+   "value": 3.0,
+   "expected": 3
+  },
+  {
+   "key": "gfx_mode",
+   "value": 4.0,
+   "expected": 3
+  },
+  {
+   "key": "gfx_mode",
+   "value": 103.0,
+   "expected": 3
+  },
+  {
+   "key": "gfx_mode",
+   "value": -1.0,
+   "expected": 1
+  },
+  {
+   "key": "gfx_mode",
+   "value": -999.0,
+   "expected": 1
+  },
+  {
+   "key": "gfx_mode",
+   "value": 999.0,
+   "expected": 3
+  },
+  {
+   "key": "gfx_mode",
+   "value": 3.5,
+   "expected": 3
+  },
+  {
+   "key": "gfx_mode",
+   "value": -1.5,
+   "expected": 1
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -1005.0,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -1001.0,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -1000.0,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -999.6,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -999.5,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -999.4,
+   "expected": -999
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 0.0,
+   "expected": 0
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 0.5,
+   "expected": 0
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 999.4,
+   "expected": 999
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 999.5,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 999.6,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 1000.0,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 1001.0,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 1100.0,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -1.0,
+   "expected": -1
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -999.0,
+   "expected": -999
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 999.0,
+   "expected": 999
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": 3.5,
+   "expected": 4
+  },
+  {
+   "key": "gpu_oc_core",
+   "value": -1.5,
+   "expected": -2
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -1005.0,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -1001.0,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -1000.0,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -999.6,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -999.5,
+   "expected": -1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -999.4,
+   "expected": -999
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 1000.0,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 1000.5,
+   "expected": 1000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 2999.4,
+   "expected": 2999
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 2999.5,
+   "expected": 3000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 2999.6,
+   "expected": 3000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 3000.0,
+   "expected": 3000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 3001.0,
+   "expected": 3000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 3100.0,
+   "expected": 3000
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 0.0,
+   "expected": 0
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -1.0,
+   "expected": -1
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -999.0,
+   "expected": -999
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 999.0,
+   "expected": 999
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": 3.5,
+   "expected": 4
+  },
+  {
+   "key": "gpu_oc_mem",
+   "value": -1.5,
+   "expected": -2
+  },
+  {
+   "key": "hysteresis",
+   "value": -4.5,
+   "expected": 0
+  },
+  {
+   "key": "hysteresis",
+   "value": -0.5,
+   "expected": 0
+  },
+  {
+   "key": "hysteresis",
+   "value": 0.5,
+   "expected": 0
+  },
+  {
+   "key": "hysteresis",
+   "value": 0.9,
+   "expected": 1
+  },
+  {
+   "key": "hysteresis",
+   "value": 1.0,
+   "expected": 1
+  },
+  {
+   "key": "hysteresis",
+   "value": 1.1,
+   "expected": 1
+  },
+  {
+   "key": "hysteresis",
+   "value": 5.25,
+   "expected": 5
+  },
+  {
+   "key": "hysteresis",
+   "value": 5.75,
+   "expected": 6
+  },
+  {
+   "key": "hysteresis",
+   "value": 9.4,
+   "expected": 9
+  },
+  {
+   "key": "hysteresis",
+   "value": 9.5,
+   "expected": 10
+  },
+  {
+   "key": "hysteresis",
+   "value": 9.6,
+   "expected": 10
+  },
+  {
+   "key": "hysteresis",
+   "value": 10.0,
+   "expected": 10
+  },
+  {
+   "key": "hysteresis",
+   "value": 11.0,
+   "expected": 10
+  },
+  {
+   "key": "hysteresis",
+   "value": 110.0,
+   "expected": 10
+  },
+  {
+   "key": "hysteresis",
+   "value": 0.0,
+   "expected": 0
+  },
+  {
+   "key": "hysteresis",
+   "value": -1.0,
+   "expected": 0
+  },
+  {
+   "key": "hysteresis",
+   "value": -999.0,
+   "expected": 0
+  },
+  {
+   "key": "hysteresis",
+   "value": 999.0,
+   "expected": 10
+  },
+  {
+   "key": "hysteresis",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "hysteresis",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "hysteresis",
+   "value": 3.5,
+   "expected": 4
+  },
+  {
+   "key": "hysteresis",
+   "value": -1.5,
+   "expected": 0
+  },
+  {
+   "key": "min_interval",
+   "value": -3.0,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 1.0,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 2.0,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 2.4,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 2.5,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 2.6,
+   "expected": 3
+  },
+  {
+   "key": "min_interval",
+   "value": 31.0,
+   "expected": 31
+  },
+  {
+   "key": "min_interval",
+   "value": 31.5,
+   "expected": 32
+  },
+  {
+   "key": "min_interval",
+   "value": 59.4,
+   "expected": 59
+  },
+  {
+   "key": "min_interval",
+   "value": 59.5,
+   "expected": 60
+  },
+  {
+   "key": "min_interval",
+   "value": 59.6,
+   "expected": 60
+  },
+  {
+   "key": "min_interval",
+   "value": 60.0,
+   "expected": 60
+  },
+  {
+   "key": "min_interval",
+   "value": 61.0,
+   "expected": 60
+  },
+  {
+   "key": "min_interval",
+   "value": 160.0,
+   "expected": 60
+  },
+  {
+   "key": "min_interval",
+   "value": 0.0,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": -1.0,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": -999.0,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 999.0,
+   "expected": 60
+  },
+  {
+   "key": "min_interval",
+   "value": 1.5,
+   "expected": 2
+  },
+  {
+   "key": "min_interval",
+   "value": 3.5,
+   "expected": 4
+  },
+  {
+   "key": "min_interval",
+   "value": -1.5,
+   "expected": 2
+  },
+  {
+   "key": "temp_wall",
+   "value": 55.0,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 59.0,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 60.0,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 60.4,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 60.5,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 60.6,
+   "expected": 61
+  },
+  {
+   "key": "temp_wall",
+   "value": 80.0,
+   "expected": 80
+  },
+  {
+   "key": "temp_wall",
+   "value": 80.5,
+   "expected": 80
+  },
+  {
+   "key": "temp_wall",
+   "value": 99.4,
+   "expected": 99
+  },
+  {
+   "key": "temp_wall",
+   "value": 99.5,
+   "expected": 100
+  },
+  {
+   "key": "temp_wall",
+   "value": 99.6,
+   "expected": 100
+  },
+  {
+   "key": "temp_wall",
+   "value": 100.0,
+   "expected": 100
+  },
+  {
+   "key": "temp_wall",
+   "value": 101.0,
+   "expected": 100
+  },
+  {
+   "key": "temp_wall",
+   "value": 200.0,
+   "expected": 100
+  },
+  {
+   "key": "temp_wall",
+   "value": 0.0,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": -1.0,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": -999.0,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 999.0,
+   "expected": 100
+  },
+  {
+   "key": "temp_wall",
+   "value": 1.5,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 2.5,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": 3.5,
+   "expected": 60
+  },
+  {
+   "key": "temp_wall",
+   "value": -1.5,
+   "expected": 60
+  }
+ ],
+ "errors": [
+  {
+   "key": "fan_duty",
+   "value": "abc",
+   "expected_error": "OutOfBounds"
+  },
+  {
+   "key": "fan_duty",
+   "value": null,
+   "expected_error": "OutOfBounds"
+  },
+  {
+   "key": "fan_duty",
+   "value": "",
+   "expected_error": "OutOfBounds"
+  },
+  {
+   "key": "no_such_key",
+   "value": 1,
+   "expected_error": "KeyNotFound",
+   "actual": 1,
+   "note": "旧版居然没抛"
+  }
+ ]
+}

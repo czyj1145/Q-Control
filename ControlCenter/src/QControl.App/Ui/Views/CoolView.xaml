@@ -1,0 +1,270 @@
+﻿<UserControl x:Class="QControl.App.Ui.Views.CoolView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:QControl.App.Ui"
+             xmlns:ctrl="clr-namespace:QControl.App.Ui.Controls"
+             Background="Transparent">
+
+  <!--
+    散热页 —— **整页只有一张卡**。
+    卡内两段（2026-10-16 用户定的第四版排布）：
+      ① 上面一行：风扇图案 + PCH 读注（左）+ 手动风扇控制（右）；
+      ② 下面：自动风扇曲线独占整卡宽（画布、三档并列、点位、报警）。
+
+    ⚠️ 曲线**必须**占整卡宽：右栏那点多宽都不够，画布一窄三档对比和拖点都会憋。
+    ⚠️ 卡头只有两个标签：风扇整体状态（固件控制 / 自动 / 手动 / 卡在 x% / 已停写·EC 仍为 x%）
+       与 FN+1 的固件状态。曲线自己的状态（运行中 / 保护中 / 已自停 / 手动接管 / 已关闭）归曲线区，别混进卡头。
+    ⚠️ 2026-11-18 用户定：**默认让风扇听 EC 固件**，自定义风扇是可选项，
+       要用户自己打开（`presets.fan.curve_enabled`，默认 false）。
+       总闸「自定义风扇」放在**卡头**（它管整页：曲线 + 手动转速）。
+       关着时：曲线编辑区与手动面板整体置灰 + 各一句原因，卡头写「固件控制」。
+       关掉这一下**会真的交回固件**（后端 0x0206=0 + 三路 UFA=0xFF，几秒内生效），
+       所以卡头正常只剩「固件控制」；「已停写 · EC 仍为 x%」只在交回失败时出现。
+       手动风扇控制**必须先开自定义风扇**（后端 /api/ec/fan 也会拒）。
+  -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <!-- ⚠️ Style=PageScroll：滚动条**浮**在最外侧 8px 上，出现时不挤动卡片（见 Theme.xaml 同名样式） -->
+  <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalContentAlignment="Stretch" Focusable="False" Padding="0">
+    <!-- ⚠️ 这张卡要**撑满页框**（多出来的高度由曲线画布吃掉）。
+         MinHeight 绑 ViewportHeight 才能让 WPF 也这样：内容少 ⇒ 卡撑满、画布变高；
+         内容多 ⇒ 照常滚动。不绑的话卡按内容自适应，上下各空一块。 -->
+    <Grid x:Name="Root" VerticalAlignment="Stretch">
+      <Border Margin="19,15,19,15" Style="{StaticResource CardBox}">
+        <DockPanel>
+
+          <!-- ==================== 卡头 ==================== -->
+          <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Fan}"/>
+              <TextBlock Text="散热" Style="{StaticResource CardTitle}"/>
+              <!-- 「自定义风扇」= 这一页的总闸（2026-11-18 用户定）：
+                   关（默认）= 风扇交给 EC 固件，本程序一个字节都不写；
+                   开 = 用下面的自定义曲线接管，手动风扇控制也才可用。
+                   ⚠️ 必须放**左侧**（跟在标题后）：它管的是整页（曲线 + 手动转速），
+                      而且右侧是状态徽标 —— 徽标文字长短会变（「自动 · CPU 55% / GPU 55%」
+                      比「固件控制」长得多），开关搁在右边会跟着左右挪，看着像"位置在跳"。 -->
+              <Border Width="1" Height="14" Margin="14,0,14,0" Opacity="0.45"
+                      Background="{DynamicResource LineBrush}"/>
+              <TextBlock Text="自定义风扇" Style="{StaticResource RowLabel}" VerticalAlignment="Center"
+                         Margin="0,0,8,0"/>
+              <ctrl:SwitchButton x:Name="CurveSwitch" Style="{StaticResource SwitchButton}"
+                                 VerticalAlignment="Center" Click="CurveSwitch_Click"
+                                 ToolTip="关（默认）= 风扇由 EC 固件按温度自动调速，本程序不写风扇；打开 = 用自定义曲线接管，手动风扇控制也才可用"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Border Style="{StaticResource CardTag}">
+                <TextBlock x:Name="FanModeTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+              <!-- FN+1 固件状态：飓风 Max / 固件自动；未知（刚重启）整块不显示，不猜 -->
+              <Border x:Name="HwMaxBox" Style="{StaticResource CardTagHot}" Margin="8,0,0,0"
+                      Visibility="Collapsed">
+                <TextBlock x:Name="HwMaxTag" Style="{StaticResource CardTagTextHot}"/>
+              </Border>
+            </StackPanel>
+          </Grid>
+
+          <!-- ==================== ① 图案 + 手动控制 ==================== -->
+          <!-- ⚠️ 两列各占一半、内容各自居中（别用「左列 Auto + 右列 *」：全屏下
+               风扇和面板中间会空出一大条）。风扇居中在左半 ⇒ 视觉上靠向卡中部；
+               面板仍 Center + MaxWidth=640。
+               两块各锁在自己的列里（列间天然有间隔），窄窗口也不会贴到一起。 -->
+          <Grid x:Name="CoolTop" DockPanel.Dock="Top">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左栏：两个风扇图案 + PCH 读注（图案在 code-behind 里 new，见 FanDial） -->
+            <StackPanel x:Name="LeftBlock" Grid.Column="0" VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+              <StackPanel x:Name="FansHost" Orientation="Horizontal" HorizontalAlignment="Center"/>
+              <!-- PCH 温度：只有 HWiNFO 给，取不到整行隐藏（不留占位横线） -->
+              <StackPanel x:Name="CoolKv" Orientation="Horizontal" HorizontalAlignment="Center"
+                          Margin="0,10,0,0" Visibility="Collapsed">
+                <TextBlock Text="PCH 温度" Style="{StaticResource RowLabel}"/>
+                <TextBlock x:Name="PchText" Text="读取中…" Style="{StaticResource KvValue}"
+                           FontSize="12.5" FontWeight="SemiBold" Margin="7,0,0,0"/>
+              </StackPanel>
+            </StackPanel>
+
+            <!-- 右栏：手动风扇控制（虚线框 + 药丸开关 + 三路各一行的滑块 + 两个按钮） -->
+            <!-- ⚠️ 别用 Stretch + 左边距：MaxWidth=640 命中后右栏会剩 330px 死白
+                 （1707 宽实测），面板左边顶格、右边空一大块。这里用 Center + 左右各 20
+                 对称边距：余量对半分，面板两侧留白一样宽；与风扇各锁一列（见上），
+                 天然不会贴到一起。不居中的话，窗口一宽就只剩左边一条。 -->
+            <ContentControl x:Name="LockPanel" Grid.Column="1" Style="{StaticResource LockPanel}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            MinWidth="360" MaxWidth="640" Margin="20,0,20,0">
+              <StackPanel>
+                <Grid>
+                  <TextBlock Text="手动风扇控制" FontSize="13" VerticalAlignment="Center"
+                             Foreground="{DynamicResource TxtBrush}"/>
+                  <ctrl:SwitchButton x:Name="ManualSwitch" Style="{StaticResource SwitchButton}"
+                                     HorizontalAlignment="Right" Click="Manual_Click"/>
+                </Grid>
+
+                <!-- 软件曲线关着时这行出现：手动转速属于"接管风扇"，必须先开总闸。
+                     关着时整块（开关 + 三个滑块 + 两个按钮）都是禁用的，光置灰不说原因
+                     会被当成坏了（用户报障就是"滑块拖不动"）。 -->
+                <TextBlock x:Name="ManualNote" Style="{StaticResource HintText}" Visibility="Collapsed"
+                           Margin="0,6,0,0" TextWrapping="Wrap"
+                           Text="需先打开卡头「自定义风扇」：关着时风扇由 EC 固件调速，手动转速写不进去。"/>
+
+                <!-- 标题下一条细分隔线：把开关区和三路滑块分开，不靠再加一行说明文字。 -->
+                <Border Height="1" Margin="0,12,0,0" Opacity="0.5"
+                        Background="{DynamicResource LineBrush}"/>
+
+                <StackPanel x:Name="FanSliders" Margin="0,14,0,0">
+                  <!-- 三路各自一行：「CPU/GPU/SYS 30%」(84px 固定) + 滑块占满剩余。
+                       ⚠️ 不要给滑块设 MinWidth：measure 阶段 DockPanel 只给 fill 剩余宽当约束，
+                           MinWidth 不参与 desired ⇒ 面板量窄；arrange 阶段被 MinWidth 兜大后
+                           100% 的拇指会落在未绘制的溢出区（2026-10-24 实测踩坑）。 -->
+                  <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Left" Width="96" Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                      <TextBlock Text="CPU" Style="{StaticResource RowLabel}"/>
+                      <TextBlock x:Name="Fan1Value" Text="30" FontSize="12.5" FontWeight="SemiBold"
+                                 Margin="5,0,1,0" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TxtBrush}"/>
+                      <TextBlock Text="%" Style="{StaticResource RowLabel}"/>
+                    </StackPanel>
+                    <Slider x:Name="Fan1Slider" Style="{StaticResource RangeSlider}" Minimum="30"
+                            Maximum="100" SmallChange="5" LargeChange="10" TickFrequency="5"
+                            IsSnapToTickEnabled="True" ValueChanged="FanSlider_Changed"/>
+                  </DockPanel>
+
+                  <DockPanel LastChildFill="True" Margin="0,10,0,0">
+                    <StackPanel DockPanel.Dock="Left" Width="96" Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                      <TextBlock Text="GPU" Style="{StaticResource RowLabel}"/>
+                      <TextBlock x:Name="Fan2Value" Text="30" FontSize="12.5" FontWeight="SemiBold"
+                                 Margin="5,0,1,0" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TxtBrush}"/>
+                      <TextBlock Text="%" Style="{StaticResource RowLabel}"/>
+                    </StackPanel>
+                    <Slider x:Name="Fan2Slider" Style="{StaticResource RangeSlider}" Minimum="30"
+                            Maximum="100" SmallChange="5" LargeChange="10" TickFrequency="5"
+                            IsSnapToTickEnabled="True" ValueChanged="FanSlider_Changed"/>
+                  </DockPanel>
+
+                  <!-- SYS：只有 caps.fan_count >= 3 的机型才显示（默认 Collapsed）。 -->
+                  <DockPanel x:Name="Fan3Row" Visibility="Collapsed" Margin="0,10,0,0" LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Left" Width="96" Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                      <TextBlock Text="SYS" Style="{StaticResource RowLabel}"/>
+                      <TextBlock x:Name="Fan3Value" Text="30" FontSize="12.5" FontWeight="SemiBold"
+                                 Margin="5,0,1,0" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TxtBrush}"/>
+                      <TextBlock Text="%" Style="{StaticResource RowLabel}"/>
+                    </StackPanel>
+                    <Slider x:Name="Fan3Slider" Style="{StaticResource RangeSlider}" Minimum="30"
+                            Maximum="100" SmallChange="5" LargeChange="10" TickFrequency="5"
+                            IsSnapToTickEnabled="True" ValueChanged="FanSlider_Changed"/>
+                  </DockPanel>
+
+                  <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Button x:Name="FanApplyButton" Content="写入转速" Style="{StaticResource MiniButton}"
+                            Margin="0,0,10,0" Click="FanApply_Click"/>
+                    <Button x:Name="FanMaxButton" Content="最大转速" Style="{StaticResource MiniButton}"
+                            Click="FanMax_Click"/>
+                  </StackPanel>
+
+                </StackPanel>
+              </StackPanel>
+            </ContentControl>
+          </Grid>
+
+          <!-- 卡内说明位（两类"东西不全"各一句，互斥）：文案在 ApplyCaps 里写 -->
+          <TextBlock x:Name="CoolNote" DockPanel.Dock="Top" Style="{StaticResource HintText}"
+                     TextAlignment="Center" Margin="0,2,0,0" Visibility="Collapsed"/>
+
+          <!-- ==================== ② 自动风扇曲线 ==================== -->
+          <DockPanel x:Name="CurveBlock" Margin="0,10,0,0">
+
+            <!-- 第一行：固定曲线开关 + 跟随/固定徽标 + 曲线状态 + 恢复出厂 -->
+            <!-- ⚠️ 总闸「自定义风扇」在卡头（见上），不在这里：它管的是整页，
+                 而这一行只管"曲线跟不跟系统模式"。 -->
+            <Grid DockPanel.Dock="Top">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="固定曲线" Style="{StaticResource RowLabel}" Margin="0,0,8,0"/>
+                <ctrl:SwitchButton x:Name="FixSwitch" Style="{StaticResource SwitchButton}" Click="Fix_Click"
+                                   ToolTip="关闭（默认）= 跟随系统模式，切办公/游戏/狂暴自动换各自曲线；打开 = 固定当前这一档，之后切模式也不再换。想固定到别的档，直接点三档列表里的「用这条」"/>
+                <Border x:Name="BindModeBox" Style="{StaticResource CardTag}" Margin="10,0,0,0">
+                  <TextBlock x:Name="BindModeTag" Text="跟随：读取中…" Style="{StaticResource CardTagText}"/>
+                </Border>
+                <Border x:Name="CurveStateBox" Style="{StaticResource CardTag}" Margin="8,0,0,0">
+                  <TextBlock x:Name="CurveStateTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+                </Border>
+                <!-- 软件曲线关着时这一行的说明。⚠️ 必须是**行内**的，不能单独占一行：
+                     单独一行会把散热页撑出滚动条（1280×800 实测超 6.7px，一屏自检会红）。
+                     关着时「跟随/固定」徽标一并收起（它说的是"切模式换哪条曲线"，
+                     曲线没开的时候没意义），腾出来的位置正好放这句话。 -->
+                <TextBlock x:Name="CurveOffNote" Style="{StaticResource HintText}" Visibility="Collapsed"
+                           VerticalAlignment="Center" Margin="12,0,0,0"
+                           Text="打开卡头「自定义风扇」后可用自定义曲线与手动转速"/>
+              </StackPanel>
+                <Button x:Name="CurveResetButton" Content="恢复风扇出厂"
+                        Style="{StaticResource MiniButtonDanger}"
+                        HorizontalAlignment="Right" Click="CurveReset_Click"
+                        ToolTip="把三档风扇曲线改成原厂 UserFan1/2/3 里的那三条（各不相同），并把温度墙 / 迟滞 / 绑定等曲线参数恢复出厂默认；只读原厂注册表，不让原厂接管风扇"/>
+            </Grid>
+
+            <!-- 软件曲线关着时的一句话说明（见上：行内那句，这里不再另起一行） -->
+
+            <!-- 第二行：编辑哪条曲线 + 应用到全部模式 -->
+            <Grid x:Name="CurveToolsRow" DockPanel.Dock="Top" Margin="0,10,0,0">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="编辑曲线" Style="{StaticResource RowLabel}" Margin="0,0,10,0"
+                           ToolTip="点三档里的任意一行，就把那一档的曲线载入下方编辑器；已载入的那一行不用再点"/>
+                <ctrl:CardButton x:Name="SrcCpu" Content="CPU 风扇" Style="{StaticResource MiniCard}"
+                                 Click="Kind_Click"
+                                 ToolTip="CPU 风扇的曲线：按 CPU 温度调速（原厂 UserFan 的 CPU 段）"/>
+                <ctrl:CardButton x:Name="SrcGpu" Content="GPU 风扇" Style="{StaticResource MiniCard}"
+                                 Click="Kind_Click"
+                                 ToolTip="GPU 风扇的曲线：按 GPU 温度调速（原厂 UserFan 的 GPU 段）"/>
+                <!-- 第三路：只给三风扇机型显示（见 RenderCaps 的 _hasFan3）。默认 Collapsed，
+                     两风扇机型上摆一个点了没反应的按钮比没有更糟。 -->
+                <ctrl:CardButton x:Name="SrcSys" Content="SYS 风扇" Style="{StaticResource MiniCard}"
+                                 Click="Kind_Click" Visibility="Collapsed"
+                                 ToolTip="SYS 风扇的曲线：按 SYS 温度调速（第三路 UFA3）"/>
+                <ctrl:CardButton x:Name="SrcMax" Content="取最高" Style="{StaticResource MiniCard}"
+                                 Click="Kind_Click" Visibility="Collapsed"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BindAllButton" Content="应用到全部模式"
+                        Style="{StaticResource MiniButton}"
+                        Click="BindAll_Click"
+                        ToolTip="把当前正在编辑的这条曲线覆盖写入办公/游戏/狂暴三档档案（三档会变成同一条）。想让切模式继续换曲线，不要点这个，改用三档行的「用这条」固定到某一档"/>
+              </StackPanel>
+            </Grid>
+
+            <!-- 三档并列：没有对比就看不出「切模式换没换曲线」 -->
+            <StackPanel x:Name="SlotsHost" DockPanel.Dock="Top" Margin="0,10,0,0"/>
+
+            <!-- 温度保护横幅：触发时才出现（报警是运行中的事，得挨着曲线看） -->
+            <Border x:Name="AlarmBar" DockPanel.Dock="Top" Style="{StaticResource AlarmBar}"
+                    Visibility="Collapsed">
+              <TextBlock x:Name="AlarmText" Style="{StaticResource AlarmText}"/>
+            </Border>
+
+            <!-- 点位编辑：与画布同样重要，钉在卡片底部 -->
+            <WrapPanel x:Name="PointsHost" DockPanel.Dock="Bottom" Margin="0,8,0,0"/>
+
+            <!-- 曲线画布（吃掉剩余高度；可拖点，见 Controls/CurveEditor.cs） -->
+            <ctrl:CurveEditor x:Name="Editor" MinHeight="156" Margin="0,10,0,0"/>
+          </DockPanel>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

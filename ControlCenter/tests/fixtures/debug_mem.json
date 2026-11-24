@@ -1,0 +1,43 @@
+{
+  "process": {
+    "ws_mb": 62.5,
+    "priv_mb": 50.3,
+    "paged_mb": 50.3,
+    "virtual_mb": 2133790.1,
+    "threads": 20,
+    "handles": 1240,
+    "uptime_s": 215
+  },
+  "gc": {
+    "heap_mb": 6.07,
+    "committed_mb": 25.58,
+    "fragmented_mb": 2.72,
+    "pinned": 3,
+    "gen0_mb": 3.18,
+    "gen1_mb": 1.39,
+    "gen2_mb": 1.47,
+    "loh_mb": 0,
+    "poh_mb": 0.02,
+    "collections": {
+      "gen0": 11,
+      "gen1": 2,
+      "gen2": 2
+    },
+    "server": false,
+    "latency": "Batch",
+    "total_available_mb": 16101.7
+  },
+  "ui_open": false,
+  "history_points": 150,
+  "trim": {
+    "why": "手动",
+    "ok": true,
+    "before_mb": 101.6,
+    "after_mb": 11.2,
+    "saved_mb": 90.4,
+    "ms": 42,
+    "at": 1793115093,
+    "at_text": "23:31:33"
+  },
+  "ts": 1793115093
+}

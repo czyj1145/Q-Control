@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════════════
+#  换行符策略 —— 配合 core.autocrlf=false，由本文件单一控制
+#  存储统一 LF，工作区除批处理外也统一 LF（与当前工作区现状一致，避免被改脏）
+# ═══════════════════════════════════════════════════════════════
+
+# 默认：文本文件规范化为 LF（必须显式写 eol，否则 Windows 上会还原成 CRLF）
+* text=auto eol=lf
+
+# ── Windows 批处理：工作区必须保持 CRLF ──
+#    ⚠️ run-as-admin.cmd 同时还是 GBK 编码，换行符被动会直接跑不起来。
+#    这里只声明换行规则，不碰编码字节。
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# ── WSH 脚本：同属 Windows 脚本，工作区留 CRLF ──
+#    不写这条时 `* text=auto eol=lf` 会把 run-silent.wsf 的工作区版本改成 LF，
+#    git 每次 diff 都报 "CRLF will be replaced by LF" —— 不是错误，但很吵，
+#    而且别人 clone 到 Windows 上会拿到一份 LF 的 .wsf，跟本机行为不一致。
+*.wsf text eol=crlf
+
+# ── 二进制：禁止任何转换 ──
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.zip  binary
+*.exe  binary
+*.dll  binary
+*.aml  binary
+*.dsl  binary

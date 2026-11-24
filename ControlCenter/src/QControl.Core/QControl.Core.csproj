@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- ⚠️ 故意不带 -windows：只要这里出现 Windows API，编译就过不去。
+         这是把「Core 零 Windows 依赖、可全量单测」这条架构约束**落到编译器上**，
+         而不是靠自觉。P2 的所有逻辑都要能在没有真机、没有管理员的环境里跑。 -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>QControl.Core</RootNamespace>
+    <AssemblyName>QControl.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 曲线引擎的 `Step()`（跑一轮）设成 internal：生产代码只该通过 Start/Stop 驱动它，
+         但测试要能一轮一轮地喂假硬件 + 假时钟。用 InternalsVisibleTo 比把它 public
+         更干净 —— public 会让"外部也能手摇曲线"变成既成事实。 -->
+    <InternalsVisibleTo Include="QControl.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DEFAULT_PRESETS / LIMITS / 命令分级表 / 机型档案：从原始配置字面量抽成 json
+         后冻结入库（不再有生成脚本，改就手改这三份）。
+         嵌入资源而不是运行期读文件：单文件发布时不用带一堆 json。
+
+         ⚠️ 必须显式 LogicalName：默认资源名是点分隔的
+         （`...Core.Data.device.unsupported.json`），而文件名本身含点，
+         靠 split('.') 还原目录结构会把 `device.unsupported.json` 误拆成
+         `device/unsupported.json`（第一次跑测试就是这么挂的）。 -->
+    <EmbeddedResource Include="Data\**\*.json">
+      <LogicalName>ccdata/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

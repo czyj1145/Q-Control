@@ -1,0 +1,162 @@
+<UserControl x:Class="QControl.App.Ui.Views.SysView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:QControl.App.Ui"
+             Background="Transparent">
+
+  <!--
+    系统页 —— **四张卡 2×2**，固定两列：
+      ① 存储      —— 物理硬盘档案（型号/容量/总线·介质·健康/卷/温度·寿命/累计读写/固件·序列号）
+      ② 电池      —— 电量 / 充放电功率 / 电压 / 满充容量 / 设计容量 / 健康度 / 剩余容量
+      ③ 运行状态  —— 内存 / 虚拟内存 / 开机时长 / 网络速率 / 累计收发
+      ④ 机型配置  —— 四条 fancurve/fan 写参数滑块 + 恢复出厂 / EC 写入自检
+
+    ⚠️ 这一页**固定两列**：
+       四张卡放三列必然空出一格。
+    ⚠️ 顺序即版式：①② 第一行、③④ 第二行（按内容高度配的对）。
+    ⚠️ 取不到的数据**整行/整块隐藏**，不留占位（ KvRow.Set(null) 就是干这个的 ）。
+    ⚠️ 机型配置那四条滑块的写法分两半：转速下限/迟滞/最小写入间隔走
+       POST /api/model/preset（presets.fan.*），温度保护墙走 POST /api/fancurve/config
+       —— 两条写口各有各的校验，别"统一"到一个口。
+  -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <!-- ⚠️ Style=PageScroll：滚动条**浮**在最外侧 8px 上，出现时不挤动卡片（见 Theme.xaml 同名样式） -->
+  <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalContentAlignment="Stretch" Focusable="False" Padding="0">
+    <Grid x:Name="Root" MinHeight="{Binding ViewportHeight, ElementName=Scroll}"
+          VerticalAlignment="Stretch">
+      <!-- 四张卡的间隔由 UiKit.ApplyCardGap(CardGrid) 统一发放（CSS gap 语义），卡上不写 Margin -->
+      <Grid x:Name="CardGrid" Margin="19,15,19,15" VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== ① 存储 ==================== -->
+        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Disk}"/>
+                <TextBlock Text="存储" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock x:Name="DiskTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+            <!-- 每块盘的盒子由 code-behind 造（行数随 SMART/HWiNFO 有无而变）。
+                 ⚠️ 上下各一条星号行把内容**居中**：本卡被同行另一张更高的卡拉伸时，
+                    星号行把单盘内容垂直居中，不顶头也不贴底；多盘机型内容超过卡片高度时，
+                    星号行收成 0、从顶部往下排（溢到卡片外由滚动区接管），不会被 Center
+                    顶到卡头上去盖住标题。 -->
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel x:Name="DrivesHost" Grid.Row="1"/>
+            </Grid>
+          </DockPanel>
+        </Border>
+
+        <!-- ==================== ② 电池 ==================== -->
+        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Battery}"/>
+                <TextBlock Text="电池" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock x:Name="AcTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+            <StackPanel x:Name="BatKv" VerticalAlignment="Center"/>
+          </DockPanel>
+        </Border>
+
+        <!-- ==================== ③ 运行状态 ==================== -->
+        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Chart}"/>
+                <TextBlock Text="运行状态" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock Text="每秒刷新" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+            <StackPanel x:Name="LiveKv" VerticalAlignment="Center"/>
+          </DockPanel>
+        </Border>
+
+        <!-- ==================== ④ 机型配置 ==================== -->
+        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Sliders}"/>
+                <TextBlock Text="机型配置" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock x:Name="ModelTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+
+            <DockPanel VerticalAlignment="Center">
+              <!-- 小标题行：「运行配置」+「可写」徽章 -->
+              <!-- 未适配机型（writes_allowed=false）时徽章变「只读」、四条滑块整块禁掉：
+                   改了也不会下发（曲线连温度都读不到），摆着能点就是骗人。2026-11-02 -->
+              <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="运行配置" Style="{StaticResource CfgTitle}"/>
+                  <Border x:Name="RwTagHost" Style="{StaticResource RwTag}" Margin="6,0,0,0"
+                          ToolTip="当前机型的 EC 写权限">
+                    <TextBlock x:Name="RwTagText" Text="可写" Style="{StaticResource RwTagText}"/>
+                  </Border>
+                </StackPanel>
+              </Grid>
+
+              <!-- 按钮贴底 -->
+              <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+                <Button x:Name="ResetButton" Content="恢复出厂" Style="{StaticResource MiniButtonDanger}"
+                        Margin="0,0,8,0" Click="Reset_Click"
+                        ToolTip="清空 presets 里改过的所有数值，并重新探测出厂基准"/>
+                <Button x:Name="SelfTestButton" Content="EC 写入自检" Style="{StaticResource MiniButton}"
+                        Click="SelfTest_Click"
+                        ToolTip="写一次键盘背光档位再读回，判断 EC 写入到底生不生效"/>
+              </StackPanel>
+
+              <!-- 四条滑块 2×2（盒子由 code-behind 造：值/事件都要绑） -->
+              <Grid x:Name="SliderGrid">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+              </Grid>
+            </DockPanel>
+          </DockPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

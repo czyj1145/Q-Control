@@ -1,0 +1,52 @@
+{
+ "backlight_alpha": {
+  "desc": "背光亮度/Alpha（LKBA）；0 会让灯全灭，禁止",
+  "hi": 255,
+  "lo": 1
+ },
+ "backlight_level": {
+  "desc": "键盘背光档位",
+  "hi": 2,
+  "lo": 0
+ },
+ "backlight_rgb": {
+  "desc": "背光 RGB 分量",
+  "hi": 255,
+  "lo": 0
+ },
+ "fan_duty": {
+  "desc": "风扇转速百分比，下限防止停转过热",
+  "hi": 100,
+  "lo": 30
+ },
+ "gfx_mode": {
+  "desc": "显卡模式码（1=混合输出 / 2=独显直连 / 3=集显输出，均已实测标定；重启后生效）",
+  "hi": 3,
+  "lo": 1
+ },
+ "gpu_oc_core": {
+  "desc": "GPU 核心频率偏移（MHz，有效；= 驱动允许范围）",
+  "hi": 1000,
+  "lo": -1000
+ },
+ "gpu_oc_mem": {
+  "desc": "GPU 显存频率偏移（MHz，有效；NVML 内部为双倍单位）",
+  "hi": 3000,
+  "lo": -1000
+ },
+ "hysteresis": {
+  "desc": "风扇曲线迟滞（°C）",
+  "hi": 10.0,
+  "lo": 0.5
+ },
+ "min_interval": {
+  "desc": "风扇曲线最小写入间隔（秒）",
+  "hi": 60.0,
+  "lo": 2.0
+ },
+ "temp_wall": {
+  "desc": "温度保护墙（°C）：CPU/GPU 任一边达到即强制最高转速并告警",
+  "hi": 100,
+  "lo": 60
+ }
+}

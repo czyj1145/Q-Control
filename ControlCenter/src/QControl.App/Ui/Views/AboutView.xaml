@@ -1,0 +1,453 @@
+<UserControl x:Class="QControl.App.Ui.Views.AboutView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:QControl.App.Ui"
+             xmlns:ctrl="clr-namespace:QControl.App.Ui.Controls"
+             Background="Transparent">
+
+  <!--
+    关于页 —— 三张卡：
+      ① 关于作者（半幅）：应用标志 + 身份说明 + 三颗主页按钮 + 一句说明（不再署名）
+      ② 应用信息（半幅）：版本 / 机型 / 监听端口 / 启动时间 / 已运行
+      ③ 日志（整行）：当前文件 + 区间记录 / 自动记录（并排）+ 占用空间 + 最近日志尾巴
+
+    ⚠️ 全页只有这几类按钮会发 POST：检查更新 / 下载更新 / 安装（都不碰 EC，安装会提权起安装器）、
+       开始-结束记录、打开目录、清理（先确认）。
+    ⚠️ 版本块有两颗按钮：主按钮随状态变（检查 / 下载 / 取消 / 安装），
+       次按钮只在「有新版本」时出现（打开发布页看完整说明）。
+    ⚠️ 区间记录状态在**后端**（LogCapture）：关页面 / 刷新 / 隔几分钟回来都还算数，
+       界面只负责"把后端状态画出来"；计时按后端给的 since 自己数，不轮询。
+    ⚠️ 「复制」「导出」这类危险动作都走确认框：清理要先拉一次占用统计，
+       把"删几个文件、多大"摆出来再让用户点（删除不可逆）。
+  -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <!-- ⚠️ Style=PageScroll：滚动条**浮**在最外侧 8px 上，出现时不挤动卡片（见 Theme.xaml 同名样式） -->
+  <ScrollViewer x:Name="Scroll" Style="{StaticResource PageScroll}"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalContentAlignment="Stretch" Focusable="False" Padding="0">
+    <Grid x:Name="Root" MinHeight="{Binding ViewportHeight, ElementName=Scroll}"
+          VerticalAlignment="Stretch">
+      <Grid x:Name="CardGrid" Margin="19,15,19,15" VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ==================== ① 关于作者 ==================== -->
+        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.User}"/>
+                <TextBlock Text="关于作者" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <!-- 右上角不再挂「隐星」标签（2026-11-17 用户要求去掉署名）：卡头已经写明
+                   「关于作者」，标签只是重复这个名字。 -->
+            </Grid>
+
+            <!-- 版本 + 更新：钉在**作者卡**底部，不再挤在右边的「应用信息」里。
+                 右边原来五行运行信息 + 这一块共六项挤在半幅卡里，左边作者信息反而偏空；
+                 而"谁做的 / 哪一版"本来就是一对，署名下面接版本号比塞进运行信息里更顺。
+                 ⚠️ 这行必须写在中间 Grid **之前**：DockPanel 按子元素顺序停靠，
+                    LastChildFill 只让**最后一个**子元素吃剩余空间。 -->
+            <Border x:Name="UpdateRow" DockPanel.Dock="Bottom" Style="{StaticResource SetRow}"
+                    Margin="0,12,0,0">
+              <DockPanel>
+                <!-- 两颗按钮：**主动作**跟着状态走（检查 / 下载 / 取消 / 安装），
+                     **次动作**只在"有新版本"时出现（打开发布页，看完整说明）。
+                     右对齐的 DockPanel 里顺序是反的：先停靠的贴最右 —— 所以主动作写在前面。 -->
+                <Button x:Name="UpdateButton" Content="检查更新" DockPanel.Dock="Right"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource MiniButton}" Click="Update_Click"
+                        ToolTip="查询 GitHub 最新发布（失败时改用 Gitee）"/>
+                <Button x:Name="UpdateAltButton" Content="发布页" DockPanel.Dock="Right"
+                        VerticalAlignment="Center" Visibility="Collapsed"
+                        Style="{StaticResource MiniButton}" Margin="0,0,8,0"
+                        Click="UpdateAlt_Click"
+                        ToolTip="在浏览器里打开发布页（看完整说明与校验和）"/>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                  <StackPanel Orientation="Horizontal">
+                    <!-- 状态灯：7px 圆点，与外设卡（CapBox / AutoBox）同一个规格 -->
+                    <Ellipse x:Name="UpdateDot" Width="7" Height="7" Margin="0,0,7,0"
+                             VerticalAlignment="Center"
+                             Fill="{DynamicResource DimBrush}" Opacity="0.45"/>
+                    <!-- 版本号是这一块的锚点：等宽数字（Tabular）+ 比正文大一档 -->
+                    <TextBlock x:Name="VerValue" Text="—"
+                               FontFamily="{StaticResource NumFont}" FontSize="15"
+                               FontWeight="SemiBold" Foreground="{DynamicResource TxtBrush}"
+                               VerticalAlignment="Center"/>
+                    <!-- 紧跟版本号的状态短标签：已是最新 / 有新版本 x / 检查失败（颜色随状态变） -->
+                    <TextBlock x:Name="UpdateTitle" Text=""
+                               FontSize="11.5" FontWeight="Medium"
+                               Foreground="{DynamicResource DimBrush}"
+                               Margin="9,0,0,0" VerticalAlignment="Center"/>
+                  </StackPanel>
+                  <!-- 说明**只占一行**：超出用省略号收尾，完整文本挂 ToolTip（悬停能看全）。
+                       ⚠️ TextTrimming 只在 NoWrap 下生效，而 SetDesc 默认是 Wrap —— 必须在这里覆盖，
+                          否则长句会折成两行把整块顶高。 -->
+                  <TextBlock x:Name="UpdateDesc" Text="读取中…" Style="{StaticResource SetDesc}"
+                             TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+              </DockPanel>
+            </Border>
+
+            <!-- ⚠️ 上下星号行 = 内容在卡内居中。原来 VerticalAlignment=Top，作者卡下半截空 90px，
+                与隔壁「应用信息」（五行铺开）摆在一起就是两张卡一紧一松（2026-10-22 统一留白节奏）。
+                 用星号行不用 Center：窄窗口下内容超高时星号行收成 0，从顶部往排，不会顶到卡头上。 -->
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel Grid.Row="1" VerticalAlignment="Top">
+              <StackPanel Orientation="Horizontal">
+                <!-- 头像：应用标志（2026-11-17 用户要求，原来是「星」字）。
+                     图是生成物 —— `python spike/_gen_app_icon.py` 出 Assets/qcontrol-mark.png，
+                     与 exe 图标 / 侧栏 logo / 托盘同源，别手改这张 PNG。
+                     圆角在图标自己身上，所以这里把 AuthorLogo 的底色覆盖成透明，
+                     否则四角会透出一圈 LogoBrush。 -->
+                <Border Style="{StaticResource AuthorLogo}" Background="Transparent">
+                  <Image Source="/QControl;component/Assets/qcontrol-mark.png"
+                         Stretch="UniformToFill"
+                         RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
+                  <!-- 两行：大字「Q-Control」+ 下面一行署名（2026-11-17 用户要求把
+                       「作者 · …」换到下一行，牌子放大）。署名用作者的 GitHub 名字
+                       （2026-11-22 用户指定：不要再写「Colorful G16 Pro 用户」这种身份说明）。 -->
+                  <TextBlock Text="Q-Control" Style="{StaticResource AuthorTitle}"/>
+                  <TextBlock Text="作者 · czyj1145"
+                             Style="{StaticResource AuthorDesc}" Margin="0,3,0,0"/>
+                </StackPanel>
+              </StackPanel>
+
+              <!-- 三颗主页按钮：GitHub / Gitee 双仓同步（源码、发版、Issue 都在），B 站是作者主页。
+                   ⚠️ 用 WrapPanel 不用 StackPanel：作者卡只占半幅，窄窗口下三颗会顶出卡片右边界，
+                      换行比截断好（地址本身写在 code-behind 的 AuthorLinks，这里只占位）。 -->
+              <WrapPanel Margin="0,12,0,0" ItemHeight="Auto">
+                <Button x:Name="GithubButton" Style="{StaticResource LinkButton}"
+                        Margin="0,0,8,8" Click="Link_Click"/>
+                <Button x:Name="GiteeButton" Style="{StaticResource LinkButton}"
+                        Margin="0,0,8,8" Click="Link_Click"/>
+                <Button x:Name="BiliButton" Style="{StaticResource LinkButton}"
+                        Margin="0,0,0,8" Click="Link_Click"/>
+              </WrapPanel>
+
+              <TextBlock Style="{StaticResource AboutNote}" Margin="0,8,0,0"
+                         Text="EC 命令号、风扇曲线与传感器来源均在本机标定。源码在 GitHub 与 Gitee 同步开源，问题与建议请提交 Issue 或到主页反馈。"/>
+              </StackPanel>
+            </Grid>
+          </DockPanel>
+        </Border>
+
+        <!-- ==================== ② 应用信息 ==================== -->
+        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Sys}"/>
+                <TextBlock Text="应用信息" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock x:Name="RuntimeTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+            <!-- 读数行由 code-behind 追加（与系统页/总览页同一套 KvRow，四行在卡内铺开）。
+                 ⚠️ 「版本」与「检查更新」已经搬到左边的作者卡：半幅宽装六项（五行 + 更新行）太挤。 -->
+            <StackPanel x:Name="InfoKv" VerticalAlignment="Stretch"/>
+          </DockPanel>
+        </Border>
+
+        <!-- ==================== ③ 机型适配（整行） ==================== -->
+        <!--
+          给**别的广达机型**用户留的出口：点一下把本机身份 + EC 原始帧 + 采样序列 + **写入验证**
+          做成一份**采集包**，发给作者后他用「import-pack」一条命令就能转成正式机型档案
+          （流程见 docs/DEVICES.md「用户采集 → 作者一条命令适配」）。
+          ⚠️ 2026-11-08 起「读」和「写」在同一次采集里验完：以前要用户自己去设置页开总闸、
+             自己试写、再回来采第二次，三跳之后绝大多数人只交了"读"的那一半。
+          ⚠️ 所以这里**必须弹一次确认**（完整采集会写 EC：性能档 + 键盘背光，写完恢复）。
+             「只读采集」那条不写任何东西，不弹确认 —— 它跟「打开目录」同级。
+          ⚠️ 两份产物各有用处：.txt 拿来粘贴（聊天窗口贴不了文件），.json 是**交付包**
+             （结论 + 每帧采样 + 写入读回值都在里面，作者只用它）。
+        -->
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Hardware}"/>
+                <TextBlock Text="机型适配" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border x:Name="AdoptTagBox" Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock x:Name="AdoptTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+
+            <StackPanel>
+              <TextBlock x:Name="AdoptDesc" Style="{StaticResource AboutNote}" TextWrapping="Wrap"
+                         Text="本机还没适配：温度与转速由 HWiNFO 兜底，EC 写入关闭。点「一键采集」，照小窗在原厂里做几步，能确认的能力才打开，没证据的如实关掉。采完点「启用本机」重启生效。"/>
+
+              <!-- 显卡模式那颗「原厂里有没有」的三态提问 2026-11-22 去掉了：
+                   这一项程序验不了（切换要重启，观察抓不到 0x0203 写字），问用户等于拿回答
+                   当证据。按默认能切处理，写档案时注明未逐档验证。 -->
+
+              <!-- 操作行：与「打开目录」「清理」同一套 SetRow + MiniButton -->
+              <Border Style="{StaticResource SetRow}" Margin="0,10,0,0">
+                <DockPanel>
+                  <!-- ⚠️ 每个 Dock=Right 的按钮都必须 VerticalAlignment="Center"：
+                       DockPanel 会把没设对齐的子元素拉伸到整行高度，而左侧提示行
+                       （AdoptHint）文字会随采集阶段变长变短、行数来回跳 —— 不居中就会
+                       「按键随地大小变」。 -->
+                  <Button x:Name="AdoptRestartButton" Content="重启生效" DockPanel.Dock="Right"
+                          VerticalAlignment="Center"
+                          Style="{StaticResource MiniButton}" Margin="8,0,0,0" Visibility="Collapsed"
+                          Click="AdoptRestart_Click"
+                          ToolTip="重启后加载新档案"/>
+                  <Button x:Name="AdoptEnableButton" Content="启用本机" DockPanel.Dock="Right"
+                          VerticalAlignment="Center"
+                          Style="{StaticResource MiniButtonAccent}" Margin="8,0,0,0" Visibility="Collapsed"
+                          Click="AdoptEnable_Click"
+                          ToolTip="按这次引导打开 EC 写入并重启（会再确认一次）"/>
+                  <Button x:Name="AdoptSaveButton" Content="一键采集" DockPanel.Dock="Right"
+                          VerticalAlignment="Center"
+                          Style="{StaticResource MiniButton}" Click="AdoptSave_Click"
+                          ToolTip="约 2 分半：认偏移 + 验写入 + 引导 + 满载看风扇"/>
+                  <Button x:Name="AdoptReadonlyButton" Content="只读采集" DockPanel.Dock="Right"
+                          VerticalAlignment="Center"
+                          Style="{StaticResource MiniButton}" Margin="0,0,8,0" Click="AdoptReadonly_Click"
+                          ToolTip="不写 EC：只认偏移 + 引导补语义（分区 / 槽位 / 转速）"/>
+                  <Button x:Name="AdoptCopyButton" Content="复制全文" DockPanel.Dock="Right" IsEnabled="False"
+                          VerticalAlignment="Center"
+                          Style="{StaticResource MiniButton}" Margin="0,0,8,0" Click="AdoptCopy_Click"
+                          ToolTip="把人读全文复制到剪贴板"/>
+                  <Button x:Name="AdoptSubmitButton" Content="提交采集包" DockPanel.Dock="Right" Visibility="Collapsed"
+                          VerticalAlignment="Center"
+                          Style="{StaticResource MiniButtonAccent}" Margin="0,0,8,0" Click="AdoptSubmit_Click"
+                          ToolTip="打开提交页，把采集包拖进去即可"/>
+                  <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock x:Name="AdoptState" Text="还没采集过" Style="{StaticResource SetTitle}"/>
+                    <TextBlock x:Name="AdoptHint" Text="约 2 分钟，会先确认一次"
+                               Style="{StaticResource SetDesc}" TextWrapping="Wrap"/>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- 采集进度（2026-11-17）：五段 = 后端真实的五个段边界
+                   （读偏移 / 引导原厂 / 验证写入 / 风扇负载 / 生成档案），
+                   不是把总时长平均切开凑的百分比 —— 编出来的进度条本项目不做。
+                   采集期间才出现；结束后收掉，位置让给一行结论。 -->
+              <StackPanel x:Name="AdoptProgressBox" Margin="0,10,0,0" Visibility="Collapsed">
+                <Grid Height="4">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <Border x:Name="AdoptSeg1" Grid.Column="0" Margin="0,0,3,0" CornerRadius="2"
+                          Background="{DynamicResource LineBrush}" ToolTip="1 读偏移：采样 EC 帧、认出温度/转速在哪"/>
+                  <Border x:Name="AdoptSeg2" Grid.Column="1" Margin="0,0,3,0" CornerRadius="2"
+                          Background="{DynamicResource LineBrush}" ToolTip="2 引导原厂：照小窗做几步，抓原厂写命令"/>
+                  <Border x:Name="AdoptSeg3" Grid.Column="2" Margin="0,0,3,0" CornerRadius="2"
+                          Background="{DynamicResource LineBrush}" ToolTip="3 验证写入：切一圈性能档/背光，读回后恢复"/>
+                  <Border x:Name="AdoptSeg4" Grid.Column="3" Margin="0,0,3,0" CornerRadius="2"
+                          Background="{DynamicResource LineBrush}" ToolTip="4 风扇负载：CPU 满载看哪路风扇跟着转"/>
+                  <Border x:Name="AdoptSeg5" Grid.Column="4" CornerRadius="2"
+                          Background="{DynamicResource LineBrush}" ToolTip="5 生成档案：写机型档案与采集包"/>
+                </Grid>
+                <TextBlock x:Name="AdoptProgressText" Style="{StaticResource SetDesc}"
+                           TextWrapping="Wrap" Margin="0,7,0,0" Text="准备中…"/>
+              </StackPanel>
+
+              <!-- 引导步骤不摆在这里，改成独立置顶小窗 Ui/GuideWindow.xaml：
+                   用户要在原厂控制中心里操作，主窗口多半被压在后面，内嵌面板得来回 Alt-Tab。 -->
+              <TextBlock x:Name="AdoptPrivacy" Style="{StaticResource SetDesc}" TextWrapping="Wrap"
+                         Margin="0,8,0,0"
+                         Text="完整采集会写两次 EC（性能档、背光，约 15 秒，采完恢复）并让 CPU 满载 30 秒；报告不含序列号、UUID、MAC、IP、用户名与路径。只想读就点「只读采集」，它一个字节都不写。"/>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- ==================== ④ 日志（整行） ==================== -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBox}">
+          <DockPanel>
+            <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Log}"/>
+                <TextBlock Text="日志" Style="{StaticResource CardTitle}"/>
+              </StackPanel>
+              <Border x:Name="LogTagBox" Style="{StaticResource CardTag}" HorizontalAlignment="Right">
+                <TextBlock x:Name="LogTag" Text="读取中…" Style="{StaticResource CardTagText}"/>
+              </Border>
+            </Grid>
+
+            <!-- 卡内各块之间统一 10px 排距 -->
+            <StackPanel Margin="0,0,0,0">
+              <!-- 总开关（2026-10-29）：关掉就**根本不写**（不挂文件句柄），重启后仍然关着。
+                   放在最上面：它是这一整张卡的前提 —— 关着时下面的记录/自动记录/尾巴都没东西。 -->
+              <Border Style="{StaticResource SetRow}" Margin="0,0,0,10">
+                <DockPanel>
+                  <ctrl:SwitchButton x:Name="LogSwitch" DockPanel.Dock="Right"
+                                     Style="{StaticResource SwitchButton}"
+                                     VerticalAlignment="Center" Margin="10,0,0,0"
+                                     Click="LogSwitch_Click"/>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="写日志文件" Style="{StaticResource SetTitle}"/>
+                    <TextBlock x:Name="LogSwitchHint" Text="读取中…" Style="{StaticResource SetDesc}"/>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- 当前日志文件 -->
+              <Border Style="{StaticResource SetRow}">
+                <DockPanel>
+                  <Button x:Name="OpenButton" Content="打开目录" DockPanel.Dock="Right"
+                          Style="{StaticResource MiniButton}" Click="Open_Click"
+                          ToolTip="在资源管理器中打开日志目录（报障时请附上日志文件）"/>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="当前日志文件" Style="{StaticResource SetTitle}"/>
+                    <!-- 路径可能是 `C:\Users\…\ControlCenter\logs` 这种长串：右侧还钉着「打开目录」，
+                         不裁就会贴到按钮边上（甚至切在半个字上）。截断用省略号，全长在 ToolTip 里。 -->
+                    <TextBlock x:Name="LogPath" Text="读取中…" Style="{StaticResource SetDesc}"
+                               TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- 手动记录 / 自动记录 并排（2026-10-29 用户要求：两边描述与样式统一）
+                   两块**同构**：`[状态点] <模式>记录 · <状态>` + 一行说明 + 右上角控件；
+                   差别只在自己那个附属控件（左：无 / 右：触发温度滑块）。
+                   ⚠️ 两块**各说各的那一段**（2026-11-08 修）：自动档自己开的那段只在右格显示
+                   "记录中 mm:ss"，左格保持「手动记录 · 未开始」并把按钮灰掉 —— 以前自动段
+                   会写进左格，看着像"自动记录把手动记录也打开了"。
+                   「最近导出」不挂在任何一边，作为两盒下方独立一行 —— 否则左盒比右盒多一行。 -->
+              <Grid Margin="0,10,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="12"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 手动记录 -->
+                <Border x:Name="CapBox" Style="{StaticResource CapBox}">
+                  <DockPanel>
+                    <Button x:Name="CapButton" Content="开始记录" DockPanel.Dock="Right"
+                            Style="{StaticResource MiniButton}" Click="Cap_Click"
+                            VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <StackPanel>
+                      <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="CapDot" Width="7" Height="7" Margin="0,0,7,0"
+                                 VerticalAlignment="Center" Fill="{DynamicResource DimBrush}" Opacity="0.35"/>
+                        <TextBlock x:Name="CapState" Text="手动记录 · 未开始" Style="{StaticResource CapState}"
+                                   Typography.NumeralAlignment="Tabular"/>
+                      </StackPanel>
+                      <TextBlock x:Name="CapHint" Text="读取中…" Style="{StaticResource CapHint}"/>
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
+
+                <!-- 自动记录 -->
+                <Border Grid.Column="2" x:Name="AutoBox" Style="{StaticResource CapBox}">
+                  <DockPanel>
+                    <ctrl:SwitchButton x:Name="AutoSwitch" DockPanel.Dock="Right"
+                                       Style="{StaticResource SwitchButton}"
+                                       VerticalAlignment="Center" Margin="10,0,0,0" Click="Auto_Click"/>
+                    <StackPanel>
+                      <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="AutoDot" Width="7" Height="7" Margin="0,0,7,0"
+                                 VerticalAlignment="Center" Fill="{DynamicResource DimBrush}" Opacity="0.35"/>
+                        <TextBlock x:Name="AutoState" Text="自动记录 · 关" Style="{StaticResource CapState}"
+                                   Typography.NumeralAlignment="Tabular"/>
+                      </StackPanel>
+                      <TextBlock x:Name="AutoHint" Text="读取中…" Style="{StaticResource CapHint}"/>
+                      <!-- 触发温度：滑块（2026-10-29 用户报「输入框里的数字不居中」）。
+                           范围 60–110 与后端 Math.Clamp 一致，步进 1。
+                           值放右端（等宽数字 + 固定右缘），拖动时只有数字变宽，°C 不动。 -->
+                      <Grid Margin="0,9,0,0">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto"/>
+                          <ColumnDefinition Width="*"/>
+                          <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="触发温度" FontSize="11" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource DimBrush}"/>
+                        <Slider x:Name="AutoTempSlider" Grid.Column="1" Style="{StaticResource RangeSlider}"
+                                Margin="12,0,12,0" VerticalAlignment="Center"
+                                Minimum="60" Maximum="110" SmallChange="1" LargeChange="5"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                ToolTip="CPU 或 GPU 达到这个温度即自动开始记录（60–110°C）"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                          <TextBlock x:Name="AutoTempValue" Text="90" FontSize="11.5" FontWeight="SemiBold"
+                                     Typography.NumeralAlignment="Tabular"
+                                     Foreground="{DynamicResource TxtBrush}"/>
+                          <TextBlock Text="°C" FontSize="11" Margin="2,0,0,0" VerticalAlignment="Center"
+                                     Foreground="{DynamicResource DimBrush}"/>
+                        </StackPanel>
+                      </Grid>
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
+
+                <!-- 最近一次导出（两盒共用，没有就不占位置） -->
+                <Border x:Name="CapLast" Grid.Row="1" Grid.ColumnSpan="3"
+                        Style="{StaticResource CapLast}" Visibility="Collapsed">
+                  <TextBlock x:Name="CapLastText" Style="{StaticResource CapLastText}"/>
+                </Border>
+              </Grid>
+
+              <!-- 占用空间 -->
+              <Border Style="{StaticResource SetRow}">
+                <DockPanel>
+                  <Button x:Name="ClearButton" Content="清理" DockPanel.Dock="Right"
+                          Style="{StaticResource MiniButtonDanger}" Click="Clear_Click"
+                          ToolTip="删除 logs 目录里的日志文件（当天日志 / 轮转旧档 / 区间导出）；确认框里可选连一键采集的采集包（adopt-*）与本机机型档案一起清"/>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="占用空间" Style="{StaticResource SetTitle}"/>
+                    <TextBlock x:Name="LogUsage" Text="读取中…" Style="{StaticResource SetDesc}"/>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- 最近日志（吃掉卡片剩余高度） -->
+              <Grid Margin="0,10,0,0">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="*" MinHeight="54"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                  <TextBlock Text="最近日志" Style="{StaticResource LogTailHead}"/>
+                  <TextBlock x:Name="LogSize" HorizontalAlignment="Right"
+                             Style="{StaticResource LogTailHead}"/>
+                </Grid>
+                <ScrollViewer x:Name="TailScroll" Grid.Row="1" Margin="0,5,0,0"
+                              VerticalScrollBarVisibility="Auto" Focusable="False">
+                  <Border Style="{StaticResource LogTailBox}">
+                    <TextBlock x:Name="LogTail" Text="读取中…" Style="{StaticResource LogTailText}"/>
+                  </Border>
+                </ScrollViewer>
+              </Grid>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,151 @@
+{
+ "cpu": {
+  "name": "13th Gen Intel(R) Core(TM) i9-13900HX",
+  "usage": 5.5,
+  "freq_mhz": 2200.0,
+  "cores": 24,
+  "threads": 32,
+  "power": 27.0,
+  "voltage": 1.161
+ },
+ "gpu": {
+  "available": true,
+  "name": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+  "temp": 47.0,
+  "usage": 6.0,
+  "power": 25.84,
+  "clock": 1005.0,
+  "mem_used": 2582.0,
+  "mem_total": 12227.0
+ },
+ "memory": {
+  "total": 16883888128,
+  "used": 10757853184,
+  "percent": 63.7
+ },
+ "battery": {
+  "present": true,
+  "percent": 98,
+  "plugged": true,
+  "voltage_v": 16.99,
+  "remain_wh": 63.4,
+  "full_wh": 64.4,
+  "design_wh": 62.7,
+  "health_pct": 100.0
+ },
+ "network": {
+  "rate": 123462.0,
+  "recv_mb": 2163.7,
+  "sent_mb": 532.1
+ },
+ "system": {
+  "uptime_s": 37906
+ },
+ "hwmon": {
+  "gpu": {
+   "mem_temp": 58.0,
+   "voltage": 0.62
+  },
+  "battery": {
+   "rate_w": 0.0
+  },
+  "vmem": {
+   "percent": 63.8,
+   "used_gb": 20.1
+  }
+ },
+ "ec_available": true,
+ "ec": {
+  "raw": "00 FA 00 02 3B 00 00 00 2E 00 00 00 27 0B 00 00 18 0B 00 00 02 00 00 00 00 00 00 00 00 00 00 00",
+  "cpu_temp": 59,
+  "gpu_temp": 46,
+  "fan1_rpm": 2855,
+  "fan2_rpm": 2840,
+  "fan3_rpm": null,
+  "backlight_level": 2
+ },
+ "perf": {
+  "mode": "beast",
+  "apmd": 0
+ },
+ "fan_hw_max": null,
+ "gfx_mode": 2,
+ "display": {
+  "ok": true,
+  "igpu": false,
+  "has_dgpu": true,
+  "dgpu": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+  "physical": [
+   "NVIDIA GeForce RTX 5070 Ti Laptop GPU"
+  ]
+ },
+ "disk_info": [
+  {
+   "index": 0,
+   "label": "硬盘 1",
+   "model": "YMTC PC41Q-1TB-B",
+   "bus": "NVMe",
+   "media": "SSD",
+   "size_gb": 954,
+   "health": "健康",
+   "firmware": "YM11D343",
+   "serial": "EXAMPLE-DISK-SERIAL",
+   "volumes": [
+    "C:",
+    "D:",
+    "E:"
+   ],
+   "temp": 40.0,
+   "life": 99.0,
+   "spare": 100.0,
+   "writes_gb": 7067.0,
+   "reads_gb": 13822.0
+  }
+ ],
+ "pch": 67.0,
+ "reboot": {
+  "ok": true,
+  "planned": false,
+  "remain": 0
+ },
+ "vendor": [
+  "HkeyUserPS.exe",
+  "HkeyOSDSvis.exe",
+  "ControlCenterDaemon.exe"
+ ],
+ "hwinfo_block": null,
+ "ec_writes": true,
+ "device": {
+  "id": "quanta-nl5",
+  "name": "七彩虹 隐星 G16 Pro",
+  "verified": true,
+  "writes_allowed": true,
+  "ec_capable": true,
+  "ec_default": true,
+  "ec_user": null,
+  "caps": {
+   "ec": true,
+   "ec_switch": true,
+   "ec_read": true,
+   "writes": true,
+   "fan_manual": true,
+   "fan_curve": true,
+   "fan_count": 2,
+   "perf_modes": [
+    "office",
+    "game",
+    "beast"
+   ],
+   "gfx_switch": true,
+   "keyboard_rgb": true,
+   "kb_zones": 3
+  }
+ },
+ "env": {
+  "mode": "wmi",
+  "admin": true,
+  "write_ok": true,
+  "hint": null
+ },
+ "ts": 1792336387.8827624
+}

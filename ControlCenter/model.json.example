@@ -1,0 +1,393 @@
+{
+  "factory_specs": {
+    "fan_curve_raw": "30,30,30,30,50,60,70,100;30,30,30,30,50,60,70,100",
+    "fan_curve": [
+      30,
+      30,
+      30,
+      30,
+      50,
+      60,
+      70,
+      100
+    ],
+    "source": "registry",
+    "fan_curve_cpu": [
+      30,
+      30,
+      30,
+      30,
+      50,
+      60,
+      70,
+      100
+    ],
+    "fan_curve_gpu": [
+      30,
+      30,
+      30,
+      30,
+      50,
+      60,
+      70,
+      100
+    ],
+    "fan_curve_sys": [
+      30,
+      30,
+      30,
+      30,
+      50,
+      60,
+      70,
+      100
+    ],
+    "FanControlSelect": 0,
+    "FanControlStatus": 0,
+    "ModeBeforeDC": 1,
+    "registry_keys": [
+      "",
+      "Alpha",
+      "ControlCenterClose",
+      "Custom",
+      "FanControlSelect",
+      "FanControlStatus",
+      "Game",
+      "HighPerformance",
+      "IsSetDefault",
+      "LEDModule",
+      "LEDWizard",
+      "Language",
+      "MarcokeyModule",
+      "ModeBeforeDC",
+      "NLW",
+      "PATH",
+      "PowerSaving",
+      "ScreenRotate",
+      "SltAll",
+      "UserFan1",
+      "UserFan1_SYS",
+      "UserFan2",
+      "UserFan2_SYS",
+      "UserFan3",
+      "UserFan3_SYS",
+      "WinKey"
+    ],
+    "probed_at": 0
+  },
+  "presets": {
+    "version": 1,
+    "fan": {
+      "min_duty": 30,
+      "max_duty": 100,
+      "hysteresis": 2.0,
+      "min_interval": 6.0,
+      "source": "cpu",
+      "mode": "auto",
+      "enabled": true,
+      "temp_wall": 95,
+      "bind_mode": true,
+      "fixed_mode": null,
+      "curve": [
+        {
+          "t": 50.0,
+          "d": 40
+        },
+        {
+          "t": 60.0,
+          "d": 55
+        },
+        {
+          "t": 70.0,
+          "d": 75
+        },
+        {
+          "t": 82.0,
+          "d": 95
+        },
+        {
+          "t": 90.0,
+          "d": 100
+        }
+      ]
+    },
+    "perf": {
+      "modes": {
+        "office": {
+          "dat2": 2,
+          "fan": {
+            "cpu": [
+              {
+                "t": 50,
+                "d": 30
+              },
+              {
+                "t": 60,
+                "d": 38
+              },
+              {
+                "t": 70,
+                "d": 50
+              },
+              {
+                "t": 80,
+                "d": 65
+              },
+              {
+                "t": 90,
+                "d": 85
+              }
+            ],
+            "gpu": [
+              {
+                "t": 50,
+                "d": 30
+              },
+              {
+                "t": 60,
+                "d": 38
+              },
+              {
+                "t": 70,
+                "d": 50
+              },
+              {
+                "t": 80,
+                "d": 65
+              },
+              {
+                "t": 90,
+                "d": 85
+              }
+            ]
+          },
+          "apmd": 2,
+          "plan": "办公",
+          "power": {
+            "cpu_pl1": 35.0,
+            "cpu_pl2": 157.0,
+            "gpu_rated": 70.0,
+            "gpu_max": 140.0,
+            "ac": true,
+            "at": 1792041246.0,
+            "src": "ui"
+          }
+        },
+        "game": {
+          "dat2": 1,
+          "fan": {
+            "cpu": [
+              {
+                "t": 50,
+                "d": 35
+              },
+              {
+                "t": 62,
+                "d": 50
+              },
+              {
+                "t": 72,
+                "d": 68
+              },
+              {
+                "t": 82,
+                "d": 85
+              },
+              {
+                "t": 90,
+                "d": 100
+              }
+            ],
+            "gpu": [
+              {
+                "t": 50,
+                "d": 35
+              },
+              {
+                "t": 62,
+                "d": 50
+              },
+              {
+                "t": 72,
+                "d": 68
+              },
+              {
+                "t": 82,
+                "d": 85
+              },
+              {
+                "t": 90,
+                "d": 100
+              }
+            ]
+          },
+          "apmd": 1,
+          "plan": "游戏",
+          "power": {
+            "cpu_pl1": 55.0,
+            "cpu_pl2": 157.0,
+            "gpu_rated": 70.0,
+            "gpu_max": 140.0,
+            "ac": true,
+            "at": 1792041233.7,
+            "src": "ui"
+          }
+        },
+        "beast": {
+          "dat2": 0,
+          "fan": {
+            "cpu": [
+              {
+                "t": 50,
+                "d": 40
+              },
+              {
+                "t": 60,
+                "d": 55
+              },
+              {
+                "t": 70,
+                "d": 75
+              },
+              {
+                "t": 82,
+                "d": 95
+              },
+              {
+                "t": 90,
+                "d": 100
+              }
+            ],
+            "gpu": [
+              {
+                "t": 50,
+                "d": 40
+              },
+              {
+                "t": 60,
+                "d": 55
+              },
+              {
+                "t": 70,
+                "d": 75
+              },
+              {
+                "t": 82,
+                "d": 95
+              },
+              {
+                "t": 90,
+                "d": 100
+              }
+            ]
+          },
+          "apmd": 0,
+          "plan": "高性能",
+          "power": {
+            "cpu_pl1": 110.0,
+            "cpu_pl2": 157.0,
+            "gpu_rated": 70.0,
+            "gpu_max": 140.0,
+            "ac": true,
+            "at": 1792166295.7,
+            "src": "boot"
+          }
+        }
+      },
+      "last_mode": "beast",
+      "restore_on_boot": true
+    },
+    "backlight": {
+      "addr": 6,
+      "effect": 1,
+      "rgb": [
+        0,
+        255,
+        255
+      ],
+      "zones": [
+        {
+          "addr": 5,
+          "rgb": [
+            0,
+            255,
+            255
+          ],
+          "name": "A"
+        },
+        {
+          "addr": 4,
+          "rgb": [
+            0,
+            255,
+            255
+          ],
+          "name": "B"
+        },
+        {
+          "addr": 3,
+          "rgb": [
+            0,
+            255,
+            255
+          ],
+          "name": "C"
+        }
+      ],
+      "zone_addrs_confirmed": true,
+      "custom_override": false
+    },
+    "gfx": {
+      "modes": {
+        "1": {
+          "code": 1,
+          "name": "混合输出",
+          "short": "混合",
+          "desc": "核显负责输出、独显按需参与渲染（日常省电）"
+        },
+        "2": {
+          "code": 2,
+          "name": "独显直连",
+          "short": "独显",
+          "desc": "显示输出直连独显，核显被固件隐藏（游戏最高帧）"
+        },
+        "3": {
+          "code": 3,
+          "name": "集显输出",
+          "short": "集显",
+          "desc": "只用核显、独显不参与（最省电；本界面将读不到 NVIDIA 数据）"
+        }
+      }
+    },
+    "ec": {
+      "gap": 0.45,
+      "enabled": null
+    },
+    "ui": {
+      "start_mode": "window",
+      "theme": "dark",
+      "osd": true,
+      "osd_fan": false,
+      "av_exclusion": {
+        "at": 0,
+        "ok": false,
+        "paths": [
+          "<Q-Control 安装目录>",
+          "<配置目录>"
+        ],
+        "error": null
+      }
+    },
+    "vendor": {
+      "kill_on_start": false,
+      "block_autostart": false,
+      "service_start_type": "auto"
+    },
+    "log": {
+      "auto": false,
+      "auto_temp": 90,
+      "enabled": true
+    }
+  },
+  "saved_at": 0
+}

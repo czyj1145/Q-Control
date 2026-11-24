@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\QControl.Core\QControl.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 黄金向量：由独立实现算出来、再逐条人工核对过的
+         输入→输出对照表。测试逐条比对，证明 C# 迁移与原实现等价 —— 不是
+         "我认为这样对"，而是"两套实现结果一致"。 -->
+    <None Include="..\fixtures\golden\*.json" CopyToOutputDirectory="PreserveNewest"
+          LinkBase="golden" />
+  </ItemGroup>
+
+</Project>

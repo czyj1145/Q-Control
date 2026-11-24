@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "current": "0.1.0",
+  "state": "newer",
+  "newer": true,
+  "checked_at": "2026-11-14 17:20:03",
+  "source": "github",
+  "error": null,
+  "latest": {
+    "version": "0.2.0",
+    "tag": "v0.2.0",
+    "name": "0.2.0",
+    "notes": "关于页可以在控制中心内下载并安装新版本；曲线接管更稳。",
+    "url": "https://github.com/czyj1145/Q-Control/releases/tag/v0.2.0",
+    "published_at": "2026-11-14T09:00:00Z",
+    "prerelease": false,
+    "assets": [
+      {
+        "name": "QControl-0.2.0-setup-win-x64.exe",
+        "size": 2097152,
+        "url": "https://github.com/czyj1145/Q-Control/releases/download/v0.2.0/QControl-0.2.0-setup-win-x64.exe"
+      },
+      {
+        "name": "QControl-0.2.0-portable-win-x64.zip",
+        "size": 61865984,
+        "url": "https://github.com/czyj1145/Q-Control/releases/download/v0.2.0/QControl-0.2.0-portable-win-x64.zip"
+      },
+      {
+        "name": "SHA256.txt",
+        "size": 203,
+        "url": "https://github.com/czyj1145/Q-Control/releases/download/v0.2.0/SHA256.txt"
+      }
+    ]
+  },
+  "download": {
+    "state": "ready",
+    "version": "v0.2.0",
+    "received": 2097152,
+    "total": 2097152,
+    "percent": 100,
+    "speed": 0,
+    "file": "C:\\Users\\user\\AppData\\Local\\Q-Control\\update\\v0.2.0\\QControl-0.2.0-setup-win-x64.exe",
+    "verified": true,
+    "expected_sha256": "90ac392f39c9fb3149c159d742d7289fc60f628b5daacdf9ecd545c1709b3e29",
+    "actual_sha256": "90ac392f39c9fb3149c159d742d7289fc60f628b5daacdf9ecd545c1709b3e29",
+    "target": "C:\\Program Files\\Q-Control",
+    "portable": false,
+    "error": null
+  }
+}

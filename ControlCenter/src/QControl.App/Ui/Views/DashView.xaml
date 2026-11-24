@@ -1,0 +1,191 @@
+<UserControl x:Class="QControl.App.Ui.Views.DashView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:QControl.App.Ui.Controls"
+             xmlns:ui="clr-namespace:QControl.App.Ui"
+             Background="Transparent">
+
+  <!--
+    总览页：
+      第一行：处理器卡（环 + 温度/功耗/频率/电压）、显卡卡（环 + 温度/功耗/频率/显存）
+      第二行：历史曲线卡（跨两列，六条线 + 图例）
+
+    ⚠️ 行序是用户定的：CPU 与显卡两卡的**前三行必须同序**（温度 → 功耗 → 频率），
+       横着看才对得上；电压/显存是各自的第四行。
+    ⚠️ 功耗/电压两行在没数据源时**整行隐藏**（不是留两横占位）—— 见 DashView.xaml.cs 的 Update。
+    ⚠️ 卡片背景是渐变（UiPalette.CardBrush），所以用 Border + CardBox 样式，别用 ShaderEffect 造阴影：
+       满屏文字的卡片加 DropShadowEffect 会把文字一起模糊掉（软件渲染，还掉帧）。
+  -->
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/QControl;component/Ui/Theme.xaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+  <!-- ⚠️ 第二行是 Auto 而不是 `*`：卡片区高度**由内容决定**、多出来的高度上下均分。
+       写成 `*` 的话窗口一高，历史曲线卡就被拉到 500px，六条线漂在中间一大片空白里
+       （2026-10-21 用户反馈的一处）。 -->
+  <!-- ⚠️ 卡片间隔不在这里写 Margin：由 UiKit.ApplyCardGap(CardGrid) 按 CSS gap 的语义统一发放
+       （2026-10-22：原先只有左卡给右边距，导致两张卡宽度差 16px、整行偏左）。 -->
+  <Grid x:Name="CardGrid" Margin="19,15,19,15" VerticalAlignment="Center">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- ==================== 处理器 ==================== -->
+    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBox}">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Cpu}"/>
+            <TextBlock Text="处理器" Style="{StaticResource CardTitle}"/>
+          </StackPanel>
+          <Border Style="{StaticResource CardTag}">
+            <TextBlock x:Name="CpuName" Text="读取中…" Style="{StaticResource CardTagText}"/>
+          </Border>
+        </Grid>
+
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <Grid Width="100" Height="100" Margin="0,0,16,0" VerticalAlignment="Center">
+            <!-- CoreBrush = .ring-in 的内盘：少了它，环只剩一条细弧浮在卡片渐变上 -->
+            <ctrl:RingGauge x:Name="CpuRing"
+                            RingBrush="{DynamicResource AccBrush}"
+                            TrackBrush="{DynamicResource RingTrackBrush}"
+                            CoreBrush="{DynamicResource RingCoreBrush}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <TextBlock x:Name="CpuPct" Text="0" FontFamily="Segoe UI" FontSize="22" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TxtBrush}" Typography.NumeralAlignment="Tabular"/>
+              <TextBlock Text="%" FontSize="11" Margin="1,0,0,3" VerticalAlignment="Bottom"
+                         Foreground="{DynamicResource DimBrush}"/>
+            </StackPanel>
+          </Grid>
+
+          <!-- 键值行由 code-behind 追加（UiKit.MakeKv）：行数会随数据源变，XAML 里写死就没法整行隐藏 -->
+          <StackPanel x:Name="CpuKv" Grid.Column="1" VerticalAlignment="Center"/>
+        </Grid>
+      </DockPanel>
+    </Border>
+
+    <!-- ==================== 显卡 ==================== -->
+    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBox}">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" Style="{StaticResource CardHeader}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Gpu}"/>
+            <TextBlock Text="显卡" Style="{StaticResource CardTitle}"/>
+          </StackPanel>
+          <Border Style="{StaticResource CardTag}">
+            <TextBlock x:Name="GpuName" Text="读取中…" Style="{StaticResource CardTagText}"/>
+          </Border>
+        </Grid>
+
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <Grid Width="100" Height="100" Margin="0,0,16,0" VerticalAlignment="Center">
+            <ctrl:RingGauge x:Name="GpuRing"
+                            RingBrush="{DynamicResource Acc2Brush}"
+                            TrackBrush="{DynamicResource RingTrackBrush}"
+                            CoreBrush="{DynamicResource RingCoreBrush}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <TextBlock x:Name="GpuPct" Text="0" FontFamily="Segoe UI" FontSize="22" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TxtBrush}" Typography.NumeralAlignment="Tabular"/>
+              <TextBlock Text="%" FontSize="11" Margin="1,0,0,3" VerticalAlignment="Bottom"
+                         Foreground="{DynamicResource DimBrush}"/>
+            </StackPanel>
+          </Grid>
+
+          <StackPanel x:Name="GpuKv" Grid.Column="1" VerticalAlignment="Center"/>
+        </Grid>
+      </DockPanel>
+    </Border>
+
+    <!-- ==================== 历史曲线 ==================== -->
+    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBox}">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource CardIcon}" Data="{x:Static ui:Icons.Chart}"/>
+            <TextBlock Text="历史曲线" Style="{StaticResource CardTitle}"/>
+          </StackPanel>
+          <!-- 右侧：量程说明 + 导出。导出是**保留期全部**（history\hist-*.csv，最多 7 天），
+               不是图上这 150 秒 —— 图上只有两分半钟，导它没有任何意义。 -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Border Style="{StaticResource CardTag}">
+              <!-- 文案里的秒数由构造函数按 AppState.HistoryWindowSec 赋值，别在这里写死第二份 -->
+              <TextBlock x:Name="HistoryTagText" Text="最近 150 秒" Style="{StaticResource CardTagText}"/>
+            </Border>
+            <Button x:Name="ExportCsvButton" Style="{StaticResource MiniButton}" Content="导出 CSV"
+                    Margin="8,0,0,0" Click="ExportCsv_Click"
+                    ToolTip="把保留期内的采样（最多 7 天）导出成 CSV"/>
+          </StackPanel>
+        </Grid>
+
+        <!-- 图例贴底；右边那句提示是**必需的**：悬停取数不是自解释的功能 -->
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+          <TextBlock DockPanel.Dock="Right" Text="鼠标移到图上查看某一刻的数值" FontSize="11"
+                     VerticalAlignment="Center" Foreground="{DynamicResource DimBrush}"/>
+          <!-- 每一项都能点：点一下隐藏那条线，再点回来（见 HistoryChart.ToggleSeries）。
+               六条线同图，空闲时就是六条平行线，想看清某一条得先把别的关掉。
+               ⚠️ Background="Transparent" 是为了让整块（含文字与色条之间）都吃得到点击 ——
+                  没有背景的 StackPanel 只有子元素那几个像素能点，手感像坏了。
+               ⚠️ 别加过渡动画（10-28 定：界面一律瞬时反馈）。 -->
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel x:Name="LegCpuT" Orientation="Horizontal" Background="Transparent" Cursor="Hand"
+                        ToolTip="点一下隐藏这条曲线，再点回来">
+              <Border Style="{StaticResource LegendBar}" Background="{DynamicResource AccBrush}"/>
+              <TextBlock Text="CPU 温度" Style="{StaticResource LegendText}"/>
+            </StackPanel>
+            <StackPanel x:Name="LegGpuT" Orientation="Horizontal" Background="Transparent" Cursor="Hand"
+                        ToolTip="点一下隐藏这条曲线，再点回来">
+              <Border Style="{StaticResource LegendBar}" Background="{DynamicResource Acc2Brush}"/>
+              <TextBlock Text="GPU 温度" Style="{StaticResource LegendText}"/>
+            </StackPanel>
+            <!-- 风扇两路：绿=CPU 风扇（实线）、青=GPU 风扇（虚线）。
+                 两条曲线的转速常年只差几十 RPM，靠颜色+虚实才分得开 —— 只写「风扇转速」
+                 会让人以为图上那一条就是全部（2026-10-23 用户问的就是这个）。 -->
+            <StackPanel x:Name="LegFan" Orientation="Horizontal" Background="Transparent" Cursor="Hand"
+                        ToolTip="点一下隐藏这条曲线，再点回来">
+              <Border Style="{StaticResource LegendBar}" Background="{DynamicResource OkBrush}"/>
+              <TextBlock Text="CPU 风扇" Style="{StaticResource LegendText}"/>
+            </StackPanel>
+            <StackPanel x:Name="LegFan2" Orientation="Horizontal" Background="Transparent" Cursor="Hand"
+                        ToolTip="点一下隐藏这条曲线，再点回来">
+              <Border Style="{StaticResource LegendBar}" Background="{DynamicResource Ok2Brush}"/>
+              <TextBlock Text="GPU 风扇" Style="{StaticResource LegendText}"/>
+            </StackPanel>
+            <StackPanel x:Name="LegCpuP" Orientation="Horizontal" Background="Transparent" Cursor="Hand"
+                        ToolTip="点一下隐藏这条曲线，再点回来">
+              <Border Style="{StaticResource LegendBar}" Background="{DynamicResource HotBrush}"/>
+              <TextBlock Text="CPU 功耗" Style="{StaticResource LegendText}"/>
+            </StackPanel>
+            <StackPanel x:Name="LegGpuP" Orientation="Horizontal" Background="Transparent" Cursor="Hand"
+                        ToolTip="点一下隐藏这条曲线，再点回来">
+              <Border Style="{StaticResource LegendBar}" Background="{DynamicResource WarnBrush}"/>
+              <TextBlock Text="GPU 功耗" Style="{StaticResource LegendText}"/>
+            </StackPanel>
+          </StackPanel>
+        </DockPanel>
+
+        <!-- 固定 272：画布高宽比是 620×200，撑满整卡会让六条线显得稀薄。
+             窗口再高也不拉长 —— 多余的空间留给整页居中。 -->
+        <ctrl:HistoryChart x:Name="Chart" Height="272"/>
+      </DockPanel>
+    </Border>
+  </Grid>
+</UserControl>

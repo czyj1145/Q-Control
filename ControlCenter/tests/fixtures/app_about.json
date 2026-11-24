@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "version": "1.0.0",
+  "runtime": ".NET 10.0.0",
+  "pid": 0,
+  "port": 8765,
+  "started": "2026-10-20 23:00:00",
+  "uptime_s": 0,
+  "device": "Colorful G16 Pro",
+  "device_verified": true,
+  "ec_writes": false,
+  "model_path": "C:\\ControlCenter\\model.json",
+  "log": {
+    "active": false,
+    "enabled": false,
+    "healthy": false,
+    "off_reason": "日志总开关已关闭",
+    "dir": "C:\\ControlCenter\\logs",
+    "path": null,
+    "file": null,
+    "bytes": 0,
+    "tail": [
+      "23:00:01.123 [boot] 启动",
+      "23:00:02.456 [loop] 一轮 2.01s"
+    ]
+  },
+  "capture": {
+    "active": false,
+    "auto_running": false,
+    "auto": false,
+    "auto_temp": 90,
+    "auto_reason": "出现错误",
+    "seq": 0,
+    "since": null,
+    "seconds": 0,
+    "last": {
+      "file": "capture-20261020-230500.log",
+      "path": "C:\\ControlCenter\\logs\\capture-20261020-230500.log",
+      "lines": 42,
+      "bytes": 12345,
+      "at": "2026-10-20 23:05:00"
+    }
+  }
+}

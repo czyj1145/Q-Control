@@ -1,0 +1,46 @@
+name: 功能建议
+description: 新功能、机型支持或使用体验方面的建议
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先说明**需要解决的问题**，再说明期望的形态。解决方案可以讨论，问题本身需清晰。
+
+        提交前请查阅 README 中的已知限制与设计原则：部分内容为**刻意不做**（例如为风扇曲线提供开关、显示占位符 `--`、跨平台支持），原因已在文档中说明。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 请说明使用场景，以及当前在哪一步受阻、需要额外操作，或必须配合其他软件完成。
+      placeholder: |
+        示例：夜间长时间下载时需要固定风扇转速，但目前必须进入散热页手动设置，托盘中无法快速切换。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望的形态
+      description: 请说明界面位置、控件名称与操作后的预期结果。可附草图或参考其他软件的实现。
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: 机型（可选）
+      description: 机型相关需求请填写品牌与型号；EC 能力因机型而异
+      placeholder: 例：七彩虹 隐星 G16 Pro（NL5）
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 已查阅 README 的已知限制与设计原则，未找到对应条目
+          required: true

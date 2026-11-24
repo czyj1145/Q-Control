@@ -1,0 +1,75 @@
+{
+  "id": "quanta-gmwmi-generic",
+  "name": "未适配的广达机型（通用）",
+  "vendor": "Quanta（OEM 未登记）",
+  "mold": "Quanta / RW_GMWMI 家族",
+  "verified": false,
+  "priority": 10,
+  "match": {
+    "any": [
+      { "wmi_classes": ["^RW_GMWMI$"] }
+    ]
+  },
+  "ec": {
+    "wmi_namespace": "root\\WMI",
+    "wmi_class": "RW_GMWMI",
+    "wmi_instance": "",
+    "read_group": "0xFA00",
+    "write_group": "0xFB00",
+    "min_gap": 0.2,
+    "kb_trunk_addr": 6,
+    "fans": 2,
+    "fans_by_sku": { "0x33": 3, "0x34": 2, "0x35": 3 },
+    "sys_probe": true,
+    "layout_verified": true,
+    "layout": {
+      "cpu_temp": [4, 4],
+      "gpu_temp": [8, 4],
+      "fan1_rpm": [12, 4],
+      "fan2_rpm": [16, 4],
+      "backlight_level": [20, 4]
+    },
+    "sys_layout": { "sys_temp": [4, 1], "fan3_rpm": [8, 2] },
+    "cmd": {
+      "status": "0x0200",
+      "sku": "0x0201",
+      "fan": "0x0205",
+      "perf": "0x0300",
+      "gfx": "0x0203",
+      "backlight": "0x0100",
+      "omcc": "0x0206",
+      "hsre": "0x0204",
+      "read_perf": "0x0202",
+      "gpu_info": "0x0207",
+      "sys_info": "0x0207"
+    },
+    "fan_slots": ["d0", "a", "d2"],
+    "read_only": ["0x0200", "0x0201", "0x0202", "0x0203", "0x0207", "0x0400"],
+    "dangerous": {
+      "0x0300": "性能模式（本机型未验证：写错会改掉 APMD，用前请确认）",
+      "0x0206": "OMCC（本机型未验证：原厂标志位，用前请确认）",
+      "0x0100": "键盘背光（本机型未验证：写错 LED 地址会亮错分区）",
+      "0x0204": "HSRE（语义未验证：原厂证据指向屏幕高刷开关，别乱用）",
+      "0x0205": "手动风扇转速 UFA1/UFA2/UFA3（写错可能停转，EC 不会自己接管）",
+      "0x0203": "显卡模式 GFXT（本机型未验证，写错要重启才看得出后果）"
+    },
+    "confirm_required": ["0x0300", "0x0206", "0x0203"]
+  },
+  "caps": {
+    "kb_zones": 3,
+    "keyboard_rgb": true,
+    "perf_modes": ["office", "game", "beast"]
+  },
+  "notes": [
+    "这条 profile 保证「认得出这是广达 RW_GMWMI 家族、能连上 EC」，并按 NL5 逆向出来的语义给能力。",
+    "写入默认关闭（设置页「EC 控制」开关默认关）：用户自己打开后才按这张命令表下发，风险由他确认。",
+    "2026-11-22 起：**温度/转速偏移、背光分区、灯带地址直接借用 NL5 的表**（同一广达固件家族；用户定：先给能力让用户试，不对再反馈）。",
+    "读数走 EC 原生；只有读不到或明显越界（温度 ≤0 或 >115 ℃、转速 >8000 或 <0）才按缺失处理，改由 HWiNFO 兜底 —— 判据在 AppState.Readings。",
+    "键盘分区同样借 NL5 的 3 区 + `kb_trunk_addr: 6`：不是本机实测得到的，灯效分区不对请把采集包发回来。",
+    "风扇路数：`0x0201` 读回 SKU，0x33/0x35 判三风扇（fans_by_sku），0x34（SKU 52）判两风扇 —— 外部样本实测 a3=0、无第三风扇；其余按 2 路。",
+    "三风扇机型的 SYS 读数在 `0x0207` 的 a2(温度 1B)/a3(转速 2B) 里 —— 这条已由 FanControlPortable v3 反编译确认，",
+    "所以本档案直接声明 sys_layout + cmd.sys_info；SYS 读取**不依赖主 layout 是否标定**（见 EcHal.ReadStatus）。",
+    "要升级成可用机型：跑「关于 › 机型适配 › 一键采集」，把采到的偏移换成真实值、`verified` 置 true —— 借来的表只是起点。",
+    "2026-11-22：手动打开 EC 写入后，性能三档（`0x0300` 下发 `presets.perf.modes[*].apmd`）、风扇手动/曲线、显卡模式全部按 NL5 语义开放。"
+  ]
+}

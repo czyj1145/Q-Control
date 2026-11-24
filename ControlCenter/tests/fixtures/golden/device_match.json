@@ -1,0 +1,286 @@
+{
+ "match": [
+  {
+   "ident": {},
+   "profile": "quanta-nl5",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {},
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": true
+    }
+   },
+   "profile": "quanta-nl5",
+   "matched": true,
+   "fields": [
+    "vendor_registry"
+   ]
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": true
+    }
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": false
+    }
+   },
+   "profile": "quanta-nl5",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": false
+    }
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "COLORFUL"
+   },
+   "profile": "quanta-nl5",
+   "matched": true,
+   "fields": [
+    "system_product",
+    "system_vendor"
+   ]
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "COLORFUL"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "七彩虹"
+   },
+   "profile": "quanta-nl5",
+   "matched": true,
+   "fields": [
+    "system_product",
+    "system_vendor"
+   ]
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "七彩虹"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "g16 pro",
+    "system_vendor": "colorful"
+   },
+   "profile": "quanta-nl5",
+   "matched": true,
+   "fields": [
+    "system_product",
+    "system_vendor"
+   ]
+  },
+  {
+   "ident": {
+    "system_product": "g16 pro",
+    "system_vendor": "colorful"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "ASUS"
+   },
+   "profile": "quanta-nl5",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "ASUS"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro"
+   },
+   "profile": "quanta-nl5",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": true
+    },
+    "system_product": "G16 Pro"
+   },
+   "profile": "quanta-nl5",
+   "matched": true,
+   "fields": [
+    "vendor_registry"
+   ]
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": true
+    },
+    "system_product": "G16 Pro"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "OTHER": true
+    },
+    "system_product": "G16 Pro",
+    "system_vendor": "COLORFUL"
+   },
+   "profile": "quanta-nl5",
+   "matched": true,
+   "fields": [
+    "system_product",
+    "system_vendor"
+   ]
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "OTHER": true
+    },
+    "system_product": "G16 Pro",
+    "system_vendor": "COLORFUL"
+   },
+   "profile": "quanta-gmwmi-generic",
+   "matched": false,
+   "fields": []
+  }
+ ],
+ "resolve": [
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": true
+    }
+   },
+   "id": "quanta-nl5",
+   "verified": true
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": false
+    }
+   },
+   "id": "unsupported",
+   "verified": false
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "COLORFUL"
+   },
+   "id": "quanta-nl5",
+   "verified": true
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "七彩虹"
+   },
+   "id": "quanta-nl5",
+   "verified": true
+  },
+  {
+   "ident": {
+    "system_product": "g16 pro",
+    "system_vendor": "colorful"
+   },
+   "id": "quanta-nl5",
+   "verified": true
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro",
+    "system_vendor": "ASUS"
+   },
+   "id": "unsupported",
+   "verified": false
+  },
+  {
+   "ident": {
+    "system_product": "G16 Pro"
+   },
+   "id": "unsupported",
+   "verified": false
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "NL5": true
+    },
+    "system_product": "G16 Pro"
+   },
+   "id": "quanta-nl5",
+   "verified": true
+  },
+  {
+   "ident": {
+    "vendor_registry": {
+     "OTHER": true
+    },
+    "system_product": "G16 Pro",
+    "system_vendor": "COLORFUL"
+   },
+   "id": "quanta-nl5",
+   "verified": true
+  }
+ ]
+}
