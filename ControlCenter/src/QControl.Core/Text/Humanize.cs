@@ -79,6 +79,54 @@ public static class Humanize
             ? u.Host + u.AbsolutePath.TrimEnd('/')
             : url;
 
+    /// <summary>
+    /// 系统页的网速：**整数，不带小数点**。KB/s 不足 1 就显示 0（空闲时本来就没流量，
+    /// 抬成 1 反而是假数据）；≥1 MB/s 折算成整数 MB/s（四舍五入，远离零）。
+    ///
+    /// ⚠️ 与 <see cref="Rate"/> 是两个口径：那个是下载卡，MB 档保留一位小数
+    ///    （"1.5 MB/s" 对下载进度有意义）；这个给实时网速，跳动的数字越短越好读。
+    /// </summary>
+    public static string RateInteger(double? bytesPerSec)
+    {
+        if (bytesPerSec is not { } s || s <= 0) return "0 KB/s";
+        var kb = Math.Round(s / 1024.0, MidpointRounding.AwayFromZero);
+        if (s < 1048576) return kb.ToString("F0", CultureInfo.InvariantCulture) + " KB/s";
+        var mb = Math.Round(s / 1048576.0, MidpointRounding.AwayFromZero);
+        return mb.ToString("F0", CultureInfo.InvariantCulture) + " MB/s";
+    }
+
+    /// <summary>
+    /// 累计流量（入参单位 MB）：≥1024 MB 折 GB（一位小数）、≥1048576 MB 折 TB（两位小数）。
+    /// null 透传 null —— 调用方据此整行不显示。
+    /// </summary>
+    public static string? TrafficMb(double? mb)
+    {
+        if (mb is not { } v) return null;
+        if (v >= 1048576) return (v / 1048576.0).ToString("F2", CultureInfo.InvariantCulture) + " TB";
+        if (v >= 1024) return (v / 1024.0).ToString("F1", CultureInfo.InvariantCulture) + " GB";
+        return v.ToString("F0", CultureInfo.InvariantCulture) + " MB";
+    }
+
+    /// <summary>
+    /// 系统页的「已运行」：到分钟为止，**没有余数的那一级不带 0**（"2 小时" 而不是 "2 小时 0 分"），
+    /// 不满一小时只说「N 分钟」（不显示秒）。
+    ///
+    /// ⚠️ 与 <see cref="Uptime"/> 不是一个口径：那个是「关于」页，天档还带小时、按秒兜底；
+    ///    这个给系统信息卡，短、稳、不闪。两个都留着，别合并。
+    /// </summary>
+    public static string? UptimeCompact(long? sec)
+    {
+        if (sec is not { } s) return null;
+        var m = (int)Math.Max(0, s / 60);
+        if (m < 60) return $"{m} 分钟";
+        var h = m / 60;
+        var mm = m % 60;
+        if (h < 24) return mm > 0 ? $"{h} 小时 {mm} 分钟" : $"{h} 小时";
+        var d = h / 24;
+        var hh = h % 24;
+        return hh > 0 ? $"{d} 天 {hh} 小时" : $"{d} 天";
+    }
+
     /// <summary>`2026-10-20T12:00:00Z` → `2026-10-20`（日期够用，精确到秒没意义）。短于 10 个字符视为没有。</summary>
     public static string? Day(string? iso)
         => iso is { Length: >= 10 } ? iso[..10] : null;

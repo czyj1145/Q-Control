@@ -162,4 +162,70 @@ public class HumanizeTests
     [Fact]
     public void OneLine_空串还是空串()
         => Assert.Equal("", Humanize.OneLine("   \r\n  ", 48));
+
+    // ---- RateInteger：系统页网速，整数不带小数点 ----
+
+    [Fact]
+    public void RateInteger_没有速度给零()
+    {
+        Assert.Equal("0 KB/s", Humanize.RateInteger(null));
+        Assert.Equal("0 KB/s", Humanize.RateInteger(0));
+        Assert.Equal("0 KB/s", Humanize.RateInteger(-5));
+    }
+
+    [Theory]
+    [InlineData(1, "0 KB/s")]          // 不足 512B/s 显示 0（空闲就是没流量，不抬成 1）
+    [InlineData(1024, "1 KB/s")]
+    [InlineData(51200, "50 KB/s")]
+    [InlineData(1048575, "1024 KB/s")] // 严格小于 1MB 仍是 KB
+    [InlineData(1048576, "1 MB/s")]
+    [InlineData(1572864, "2 MB/s")]    // 1.5 远离零取整
+    [InlineData(2097152, "2 MB/s")]
+    public void RateInteger_按档位折算且不带小数点(double v, string want)
+    {
+        var s = Humanize.RateInteger(v);
+        Assert.Equal(want, s);
+        Assert.DoesNotContain(".", s);
+    }
+
+    // ---- TrafficMb：累计流量 MB → GB / TB ----
+
+    [Fact]
+    public void TrafficMb_缺数据返回null()
+        => Assert.Null(Humanize.TrafficMb(null));
+
+    [Theory]
+    [InlineData(0, "0 MB")]
+    [InlineData(512.4, "512 MB")]
+    [InlineData(1023.9, "1024 MB")]
+    [InlineData(1024, "1.0 GB")]
+    [InlineData(1536, "1.5 GB")]
+    [InlineData(1048576, "1.00 TB")]
+    [InlineData(1572864, "1.50 TB")]
+    public void TrafficMb_按档位折算(double mb, string want)
+        => Assert.Equal(want, Humanize.TrafficMb(mb));
+
+    // ---- UptimeCompact：系统页时长，没有余数的那一级不带 0 ----
+
+    [Fact]
+    public void UptimeCompact_缺数据返回null()
+        => Assert.Null(Humanize.UptimeCompact(null));
+
+    [Theory]
+    [InlineData(0, "0 分钟")]
+    [InlineData(59, "0 分钟")]
+    [InlineData(60, "1 分钟")]
+    [InlineData(3599, "59 分钟")]
+    [InlineData(3600, "1 小时")]
+    [InlineData(3660, "1 小时 1 分钟")]
+    [InlineData(86399, "23 小时 59 分钟")]
+    [InlineData(86400, "1 天")]
+    [InlineData(90000, "1 天 1 小时")]
+    [InlineData(172800, "2 天")]
+    public void UptimeCompact_只在有余数时带后一级(long sec, string want)
+        => Assert.Equal(want, Humanize.UptimeCompact(sec));
+
+    [Fact]
+    public void UptimeCompact_负数按零()
+        => Assert.Equal("0 分钟", Humanize.UptimeCompact(-100));
 }

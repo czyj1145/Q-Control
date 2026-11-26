@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using QControl.App.Http.Contract;
 using QControl.App.Ui.Controls;
+using QControl.Core.Text;
 
 namespace QControl.App.Ui.Views;
 
@@ -471,34 +472,13 @@ public partial class SysView : UserControl
             ? $"{Fmt(vp, 0)}%" + (vmem.UsedGb is { } ug ? $"（{Fmt(ug, 1)} GB）" : "")
             : null);
 
-        _uptime.Set(UptimeText(s.System?.UptimeS));
+        _uptime.Set(Humanize.UptimeCompact(s.System?.UptimeS));
 
         var rate = net?.Rate ?? 0;
-        _netRate.SetAlways(rate > 1048576 ? $"{Fmt(rate / 1048576.0, 1)} MB/s" : $"{Fmt(rate / 1024.0)} KB/s");
-        _netRecv.Set(MbText(net?.RecvMb));
-        _netSent.Set(MbText(net?.SentMb));
-    }
-
-    private static string? MbText(double? mb)
-    {
-        if (mb is not { } v) return null;
-        if (v >= 1048576) return $"{Fmt(v / 1048576.0, 2)} TB";
-        if (v >= 1024) return $"{Fmt(v / 1024.0, 1)} GB";
-        return $"{Fmt(v)} MB";
-    }
-
-    /// <summary>秒 → 「N 天 H 小时」/「H 小时 M 分钟」/「M 分钟」（逐级只在有余数时带上后一级）。</summary>
-    private static string? UptimeText(long? sec)
-    {
-        if (sec is not { } s) return null;
-        var m = Math.Max(0, (int)s / 60);
-        if (m < 60) return $"{m} 分钟";
-        var h = m / 60;
-        var mm = m % 60;
-        if (h < 24) return mm > 0 ? $"{h} 小时 {mm} 分钟" : $"{h} 小时";
-        var d = h / 24;
-        var hh = h % 24;
-        return hh > 0 ? $"{d} 天 {hh} 小时" : $"{d} 天";
+        // 整数显示（不出现小数点）：实时网速跳得勤，位数越少越好读；口径见 Humanize.RateInteger
+        _netRate.SetAlways(Humanize.RateInteger(rate));
+        _netRecv.Set(Humanize.TrafficMb(net?.RecvMb));
+        _netSent.Set(Humanize.TrafficMb(net?.SentMb));
     }
 
     // ================================================================ 机型配置
