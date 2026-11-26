@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using QControl.Core.Devices;
+using QControl.Core.Lights;
 
 namespace QControl.App;
 
@@ -55,8 +56,7 @@ public sealed partial class AppState
 
     private const long AutoOffCooldownMs = 30_000;
 
-    /// <summary>「最近有输入」的判据（毫秒）。比这个更久不算人在用。</summary>
-    private const long AutoOffIdleResetMs = 2_000;
+    // 「最近有输入」的判据（2 秒）跟着判定一起搬进了 Core，见 AutoOffRule.IdleResetMs。
 
     /// <summary>
     /// 采样循环里每拍调一次（`Loop`）。只做判断 + 起后台写入，本身很快。
@@ -75,24 +75,30 @@ public sealed partial class AppState
         var locked = SessionLocked();
         var idle = IdleMilliseconds();
 
-        if (_autoOffBy != 0)
+        // 判定顺序（先恢复、再冷却、锁屏优先于闲置）在 Core，见 AutoOffRule 的注释。
+        switch (AutoOffRule.Decide(
+                    offBy: _autoOffBy,
+                    locked: locked,
+                    idleMs: idle,
+                    coolingDown: Environment.TickCount64 < _autoOffCooldownUntil,
+                    minutes: minutes,
+                    onLock: onLock))
         {
-            // 恢复：解锁 + 有人在用（见类注释的 ②）
-            if (!locked && idle < AutoOffIdleResetMs)
+            case AutoOffAction.Restore:
                 _ = RestoreBacklightAsync("已恢复");
-            return;
+                return;
+
+            case AutoOffAction.TurnOffLock:
+                _ = TurnOffBacklightAsync(2, snap);
+                return;
+
+            case AutoOffAction.TurnOffIdle:
+                _ = TurnOffBacklightAsync(1, snap);
+                return;
+
+            default:
+                return;
         }
-
-        if (Environment.TickCount64 < _autoOffCooldownUntil) return;
-
-        if (locked && onLock)
-        {
-            _ = TurnOffBacklightAsync(2, snap);
-            return;
-        }
-
-        if (minutes > 0 && idle >= minutes * 60_000L)
-            _ = TurnOffBacklightAsync(1, snap);
     }
 
     /// <summary>
