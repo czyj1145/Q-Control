@@ -146,6 +146,50 @@ public sealed class FanStuckGuardTests
         Assert.True(v.FrozenSeconds >= 150);
     }
 
+    // ---- 2026-11-26 收严：摆动判据补转速门槛 ----
+
+    [Fact]
+    public void 转速停在待机下限时温度摆动不算卡住()
+    {
+        var g = Guard();
+        // 本机待机下限 2311–2400 RPM：停在这一档时温度摆动本来就不改转速（日志实测 5 次误接管）
+        var v = Run(g, 1000, 5, 40, _ => 2400, i => 60.0 + i * 0.3, duty: null).Last;
+
+        Assert.False(v.Stuck);
+        Assert.Equal(0, g.Attempts);
+    }
+
+    [Fact]
+    public void 转速很低时摆动判据照样生效()
+    {
+        var g = Guard();
+        var v = Run(g, 1000, 5, 40, _ => 1600, i => 60.0 + i * 0.3, duty: null).Last;
+
+        Assert.True(v.Stuck);
+        Assert.Equal(FanStuckGuard.ReasonSwing, v.Reason);
+    }
+
+    [Fact]
+    public void 转速门槛边界两千仍然判()
+    {
+        var g = Guard();
+        var v = Run(g, 1000, 5, 40, _ => 2000, i => 60.0 + i * 0.3, duty: null).Last;
+
+        Assert.True(v.Stuck);
+        Assert.Equal(FanStuckGuard.ReasonSwing, v.Reason);
+    }
+
+    [Fact]
+    public void 待机下限那一档由高温判据接住_没有丢覆盖()
+    {
+        var g = Guard();
+        // 转速 2400 不再进摆动判据，但温度到 78 °C 时高温判据仍会动手（它允许 ≤ HotRpm）
+        var v = Run(g, 1000, 5, 40, _ => 2400, _ => 78.0, duty: null).Last;
+
+        Assert.True(v.Stuck);
+        Assert.Equal(FanStuckGuard.ReasonHot, v.Reason);
+    }
+
     [Fact]
     public void 待机温度稳定转速恒定是正常的不许误判()
     {

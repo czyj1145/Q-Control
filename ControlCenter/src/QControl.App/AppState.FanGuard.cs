@@ -104,6 +104,9 @@ public sealed partial class AppState
         if (Num(g["hot_frozen_s"]) is { } hf) _fanGuard.HotFrozenSeconds = hf;
         if (Num(g["frozen_s"]) is { } fz) _fanGuard.FrozenSeconds = fz;
         if (Num(g["temp_swing"]) is { } ts) _fanGuard.TempSwing = ts;
+        // 摆动判据的转速门槛：不同模具的待机下限差很多（本机 2311–2400），
+        // 定低了会把"停在下限"当卡死，定高了会漏掉真的没在吹。按机型调这一个键。
+        if (Num(g["swing_max_rpm"]) is { } sm) _fanGuard.SwingMaxRpm = Math.Clamp((int)Math.Round(sm), 0, 8000);
         if (Num(g["cooldown_s"]) is { } cd) _fanGuard.CooldownSeconds = cd;
         if (Num(g["max_attempts"]) is { } ma) _fanGuard.MaxAttempts = Math.Clamp((int)Math.Round(ma), 0, 5);
         // 转速抖动容差：不同模具的转速读数跳动幅度差很多（有的 ±10，有的 ±80），

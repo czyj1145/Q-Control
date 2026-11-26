@@ -137,6 +137,22 @@ public sealed class FanStuckGuard
     /// <summary>通用"纹丝不动"窗口（秒），配合 <see cref="TempSwing"/> 用。</summary>
     public double FrozenSeconds = 150;
 
+    /// <summary>
+    /// 摆动判据的**转速门槛**（RPM）：只有转速低于它，"不跟温度"才算卡住。
+    ///
+    /// <para>
+    /// 2026-11-26 收严：本机 EC 的待机下限是 2311–2400 RPM，风扇停在下限时温度小幅摆动
+    /// 本来就不会改变转速 —— 旧判据没有转速条件，于是**待机一天误接管 5 次**（日志实测
+    /// 2311 / 2393 / 2403 / 2591 / 2796）。高温判据本来就有 <see cref="HotRpm"/> 这道门槛，
+    /// 摆动判据却一道都没有，这是两条判据不对齐的地方。
+    /// </para>
+    /// <para>
+    /// ⚠️ 代价（明知）：风扇卡在 2400 以上、温度还往上爬时，摆动判据不再报警；
+    /// 温度到 78 °C 仍由高温判据兜（它允许 ≤2400），再高就超出这套判据的设计范围。
+    /// </para>
+    /// </summary>
+    public int SwingMaxRpm = 2000;
+
     /// <summary>转速抖动容差（RPM）。EC 的转速读数本身会 ±10 上下跳。</summary>
     public int RpmTolerance = 25;
 
@@ -454,7 +470,10 @@ public sealed class FanStuckGuard
 
             // ② 温度摆了这么多度，转速一级都没跳。
             //    温度没风险（低于 RiskTemp）时不算 —— 58 °C 不动是正常的，别去打扰风扇。
-            if (f.TempHi >= RiskTemp && f.TempHi - f.TempLo >= TempSwing && sec >= FrozenSeconds)
+            //    转速在下限以上（≥ SwingMaxRpm）也不算 —— 风扇明明在吹，不跟温度不构成风险；
+            //    2026-11-26 收严，见 SwingMaxRpm 的注释。
+            if (f.TempHi >= RiskTemp && f.TempHi - f.TempLo >= TempSwing
+                && v <= SwingMaxRpm && sec >= FrozenSeconds)
                 return (true, ReasonSwing, i + 1, v, sec);
         }
 
