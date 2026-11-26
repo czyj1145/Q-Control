@@ -15,6 +15,12 @@ public enum FanTagKind
     /// <summary>自定义风扇关着、EC 里也没有我们写的值 ⇒ 真·固件控制。</summary>
     Firmware,
 
+    /// <summary>
+    /// 开关关着，但引擎在跑 —— **只有风扇守护的 `Start(force:true)` 会出现这种组合**：
+    /// 固件调速被判定失效，本程序已按曲线接管（写 EC），用户的开关仍保持关闭。
+    /// </summary>
+    GuardForced,
+
     /// <summary>自定义风扇关着，但这次没交回成功，EC 还钉着上一次写的值。</summary>
     StoppedStillStuck,
 
@@ -57,6 +63,10 @@ public static class FanTagRule
     {
         if (!statusLoaded) return FanTagKind.Loading;
         if (!ecPresent) return FanTagKind.EcFailed;
+
+        // ④ 守护接管：开关是关的、引擎却在跑。写硬件的事实必须压过"没开"的说法，
+        //    否则界面会一边说「固件控制」一边按曲线写 UFA（2026-11-26 日志实证）。
+        if (running && !enabled) return FanTagKind.GuardForced;
 
         // 顺序 1：临时满转不是"交回失败"
         if (oemMax) return FanTagKind.OemMax;

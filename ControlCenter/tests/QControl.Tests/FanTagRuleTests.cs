@@ -86,4 +86,29 @@ public class FanTagRuleTests
     [Fact]
     public void 典型现场_曲线关着交回成功_显示固件控制()
         => Assert.Equal(FanTagKind.Firmware, Decide(enabled: false, running: false, stuckDuty: null));
+
+    // ---- 守护接管：开关关着但引擎在跑（只有 Start(force:true) 会出现）----
+
+    [Fact]
+    public void 开关关着但引擎在跑_说守护接管()
+        => Assert.Equal(FanTagKind.GuardForced, Decide(enabled: false, running: true));
+
+    [Fact]
+    public void 守护接管时即使EC里钉着值也不是固件控制()
+        => Assert.Equal(FanTagKind.GuardForced, Decide(enabled: false, running: true, stuckDuty: 45));
+
+    [Fact]
+    public void 守护接管压过临时满转标记()
+        => Assert.Equal(FanTagKind.GuardForced, Decide(enabled: false, running: true, oemMax: true, stuckDuty: 100));
+
+    [Fact]
+    public void 开关开着且曲线在跑仍是自动()
+        => Assert.Equal(FanTagKind.AutoRunning, Decide(enabled: true, running: true, stuckDuty: 60));
+
+    [Fact]
+    public void 守护接管也要让位于读取中与EC失败()
+    {
+        Assert.Equal(FanTagKind.Loading, Decide(statusLoaded: false, enabled: false, running: true));
+        Assert.Equal(FanTagKind.EcFailed, Decide(ecPresent: false, enabled: false, running: true));
+    }
 }

@@ -311,6 +311,15 @@ public partial class CoolView : UserControl
 
         if (tagKind == FanTagKind.Loading) FanModeTag.Text = "读取中…";
         else if (tagKind == FanTagKind.EcFailed) FanModeTag.Text = "EC 读取失败";
+        else if (tagKind == FanTagKind.GuardForced)
+        {
+            // 开关关着、引擎在跑：风扇守护按曲线接管了（写 EC）。
+            // 这里绝不能显示「固件控制」—— 界面说没在写、实际在写，是本项目最不能有的错。
+            FanModeTag.Text = "守护接管";
+            FanModeTag.ToolTip = "固件调速被判定失效（温度变了转速不跟），风扇守护已按曲线接管，"
+                + "「自定义风扇」开关仍是关闭状态。"
+                + "开一次或关一次「自定义风扇」即回到你自己的选择。";
+        }
         // ⚠️ 「自定义风扇关着」排在「手动」之前：关掉时后端会把 mode 归到 auto，
         //    正常走不到这里，但它才是"风扇现在听谁"的**根本答案**，优先级最高。
         //
@@ -394,10 +403,19 @@ public partial class CoolView : UserControl
         // ---- 曲线状态 ----
         string text, tone;
         string? tip;
+        // 自救接管：开关关着、引擎却在跑（只有 Start(force:true) 会出现这种组合）。
+        // 这一条必须排在「已关闭 · 固件调速」之前，否则曲线明明在写、界面却说固件在调。
+        if (_fan.Enabled != true && _fan.Running == true)
+        {
+            text = "守护接管中 · CPU " + Dump(LongOf(_fan.DutyCpu)) + "% / GPU " + Dump(LongOf(_fan.DutyGpu)) + "%";
+            tone = "warn";
+            tip = "固件调速被判定失效，风扇守护已按曲线接管；你的「自定义风扇」开关仍是关闭状态。"
+                + "开一次或关一次「自定义风扇」即回到你自己的选择。";
+        }
         // 总开关关着（出厂默认）⇒ 曲线没有"在不在跑"这回事，一句话说清现状。
         // 这一条必须排最前：关着时 running=false、last_error 也多半是 null，
         // 走到下面的 else 会显示成「启动中…」，看着像卡在启动阶段。
-        if (_fan.Enabled != true)
+        else if (_fan.Enabled != true)
         {
             text = "已关闭 · 固件调速";
             tone = "none";
